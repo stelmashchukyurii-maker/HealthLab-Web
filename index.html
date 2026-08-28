@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1118" />
+  <title>HealthLab</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar"><div><div class="eyebrow">HEALTHLAB WEB V1.1</div><h1>HealthLab</h1></div><button id="logoutBtn" class="ghost hidden">Вийти</button></header>
+    <section id="authCard" class="card auth-card"><h2>Вхід</h2><p>Увійди тим самим акаунтом HealthLab, який використовується в Android для синхронізації.</p><label>Email<input id="email" type="email" autocomplete="email" /></label><label>Пароль<input id="password" type="password" autocomplete="current-password" /></label><button id="loginBtn" class="primary">Увійти</button><div id="authStatus" class="status"></div></section>
+    <section id="dashboard" class="hidden">
+      <div class="person-row card compact"><div><div class="eyebrow">ЛЮДИНА</div><select id="personSelect"></select></div><div class="right"><div class="eyebrow">ДЖЕРЕЛО</div><div id="deviceName">—</div></div></div>
+      <section class="hero-grid"><article class="metric-card accent"><div class="eyebrow">ПУЛЬС ЗАРАЗ</div><div class="metric"><span id="liveHr">—</span><small> уд/хв</small></div><div id="liveHrTime" class="muted">—</div></article><article class="metric-card"><div class="eyebrow">HRV · RMSSD</div><div class="metric"><span id="hrv">—</span><small> мс</small></div><div class="muted">з останніх RR</div></article><article class="metric-card"><div class="eyebrow">RR</div><div class="metric"><span id="rrCount">—</span></div><div class="muted">записів за 24 год</div></article><article class="metric-card"><div class="eyebrow">ОСТАННЯ СИНХРОНІЗАЦІЯ</div><div id="lastSync" class="metric small">—</div></article></section>
+      <section class="card"><div class="section-title-row"><div><div class="eyebrow">СЬОГОДНІ</div><h2>Пульс</h2></div><button id="refreshBtn" class="ghost">Оновити</button></div><canvas id="hrChart" width="1000" height="360"></canvas><div id="chartEmpty" class="empty hidden">Після синхронізації тут з'явиться графік HR.</div></section>
+      <section class="metrics-list card"><div class="row"><span>Пульс у спокої</span><b id="restingHr">—</b></div><div class="row"><span>Дихання</span><b id="respiration">—</b></div><div class="row"><span>SpO₂</span><b id="spo2">—</b></div><div class="row"><span>Температура шкіри</span><b id="skinTemp">—</b></div><div class="row"><span>Сон</span><b id="sleep">—</b></div><div class="row"><span>Відновлення</span><b id="recovery">—</b></div><div class="row"><span>Навантаження</span><b id="strain">—</b></div></section><div id="dataStatus" class="status"></div>
+    </section>
+  </main><script src="./app.js"></script>
+</body></html>
