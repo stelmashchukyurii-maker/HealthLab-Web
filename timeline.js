@@ -19,12 +19,13 @@ $('todayBtn').onclick=()=>{selectedDay=startOfDay(new Date());load()};
 document.querySelectorAll('#rangeButtons button').forEach(b=>b.onclick=()=>{hours=Number(b.dataset.hours);document.querySelectorAll('#rangeButtons button').forEach(x=>x.classList.toggle('active',x===b));sliceVisible();renderAll()});
 document.querySelectorAll('#layerButtons button').forEach(b=>b.onclick=()=>{
   const key=b.dataset.layer;
-  if(b.classList.contains('future')){ $('layerHint').textContent=key==='glucose'?'Шар глюкози вже зарезервований. З’явиться автоматично після підключення CGM/глюкометра.':'Цей Garmin-шар зарезервований. Поки прямі хвилинні Stress / Body Battery ще не надходять у HealthLab.';return }
+  if(b.classList.contains('future')){$('layerHint').textContent=key==='glucose'?'Шар глюкози вже зарезервований. З’явиться автоматично після підключення CGM/глюкометра.':'Цей Garmin-шар зарезервований. Поки прямі хвилинні Stress / Body Battery ще не надходять у HealthLab.';return}
   layers[key]=!layers[key];b.classList.toggle('on',layers[key]);saveLayerPrefs();renderChart();
 });
 
 const canvas=$('timelineChart');
-canvas.addEventListener('pointerdown',pickPoint);canvas.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')pickPoint(e)});
+canvas.addEventListener('pointerdown',pickPoint);
+canvas.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')pickPoint(e)});
 window.addEventListener('resize',()=>renderChart());
 loadLayerPrefs();load();
 
@@ -41,6 +42,8 @@ function signed(v){return `${v>=0?'+':''}${Math.round(v)}`}
 function fmtTime(ts){return new Date(ts).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})}
 function fmtDate(d){return d.toLocaleDateString('uk-UA',{weekday:'short',day:'2-digit',month:'2-digit'})}
 function validHrv(r){return r.rrCount>=100&&Number.isFinite(r.rmssd)&&r.rmssd>=5&&r.rmssd<=250}
+function motionWord(r){if(!Number.isFinite(r.motion)||!Number.isFinite(model.movementThreshold))return '—';const k=r.motion/Math.max(model.movementThreshold,.001);if(k<.5)return 'дуже низький';if(k<1)return 'низький';if(k<2.5)return 'помірний';return 'високий'}
+function shortReason(r){const s=String(r?.reason||'');return s.length>135?s.slice(0,132)+'…':s}
 
 async function load(){
   $('status').textContent='Оновлюю хронологію…';
@@ -86,7 +89,7 @@ function calcLoad(r){
   if(r.state==='SLEEP')return 0;if(r.state==='UNKNOWN')return null;
   if(r.state==='MOVEMENT')return Math.round(clamp(35+65*Math.min(1,r.motion/Math.max(model.movementThreshold*8,.001)),0,100));
   if(r.state==='RECOVERY')return Math.round(clamp(25+Math.max(0,r.residual||0)*2.5,20,80));
-  if(r.state==='AUTONOMIC_LOAD'){let s=45+Math.max(0,r.residual||0)*2; if(r.hrvValid&&Number.isFinite(model.baselineRmssd)&&model.baselineRmssd>0)s+=Math.max(0,(model.baselineRmssd-r.rmssd)/model.baselineRmssd)*25;return Math.round(clamp(s,40,100))}
+  if(r.state==='AUTONOMIC_LOAD'){let s=45+Math.max(0,r.residual||0)*2;if(r.hrvValid&&Number.isFinite(model.baselineRmssd)&&model.baselineRmssd>0)s+=Math.max(0,(model.baselineRmssd-r.rmssd)/model.baselineRmssd)*25;return Math.round(clamp(s,40,100))}
   return Math.round(clamp(8+Math.max(0,r.residual||0)*1.4,0,35));
 }
 function findContext(ts){
@@ -101,7 +104,18 @@ function contextLabel(r){const p=[];if(r.context?.meal){const e=r.context.meal,a
 
 function sliceVisible(){const s=rangeStart(),e=dayEnd();rows=allRows.filter(r=>r.ts>=s&&r.ts<=e);hoverIndex=rows.length?rows.length-1:null;$('rangeCaption').textContent=`${fmtTime(s)}–${fmtTime(e)} · один часовий масштаб для всіх шарів`}
 function renderAll(){renderSummary();renderTotals();renderChart();updateQuality()}
-function renderSummary(){if(hoverIndex===null||!rows[hoverIndex]){setText('stateName','—');setText('loadScore','—');setText('reasonLine','Немає даних у вибраному вікні.');return}const r=rows[hoverIndex],m=META[r.state]||META.UNKNOWN;$('stateDot').className='state-dot '+m.cls;setText('stateName',m.label);setText('loadScore',Number.isFinite(r.loadScore)?r.loadScore:'—');setText('pointTime',fmtTime(r.ts));setText('pointHr',Number.isFinite(r.avgHr)?`${Math.round(r.avgHr)} уд/хв`:'—');setText('pointMotion',Number.isFinite(r.motion)?r.motion.toFixed(3):'—');setText('pointHrv',r.hrvValid?`${Math.round(r.rmssd)} мс`:'—');setText('contextLine','Контекст: '+contextLabel(r));setText('reasonLine',r.reason||'—')}
+function renderSummary(){
+  if(hoverIndex===null||!rows[hoverIndex]){setText('stateName','—');setText('loadScore','—');setText('reasonLine','Немає даних у вибраному вікні.');hideTooltip();return}
+  const r=rows[hoverIndex],m=META[r.state]||META.UNKNOWN;$('stateDot').className='state-dot '+m.cls;setText('stateName',m.label);setText('loadScore',Number.isFinite(r.loadScore)?r.loadScore:'—');setText('pointTime',fmtTime(r.ts));setText('pointHr',Number.isFinite(r.avgHr)?`${Math.round(r.avgHr)} уд/хв`:'—');setText('pointMotion',Number.isFinite(r.motion)?r.motion.toFixed(3):'—');setText('pointHrv',r.hrvValid?`${Math.round(r.rmssd)} мс`:'—');setText('contextLine','Контекст: '+contextLabel(r));setText('reasonLine',r.reason||'—');updateTooltipContent(r)
+}
+function updateTooltipContent(r){
+  const tip=$('pointTooltip'),m=META[r.state]||META.UNKNOWN,end=Math.min(dayEnd(),r.ts+300000);
+  setText('tipTime',`${fmtTime(r.ts)}–${fmtTime(end)}`);$('tipDot').className='state-dot '+m.cls;setText('tipState',m.label);setText('tipLoad',Number.isFinite(r.loadScore)?`HL ${r.loadScore}/100`:'HL —');
+  const hr=Number.isFinite(r.avgHr)?`${Math.round(r.avgHr)} уд/хв`:'—',mv=Number.isFinite(r.motion)?`${motionWord(r)} · ${r.motion.toFixed(3)}`:'—',hv=r.hrvValid?`${Math.round(r.rmssd)} мс`:'немає надійного';
+  setText('tipValues',`Пульс ${hr} · рух ${mv} · HRV ${hv}`);const c=contextLabel(r);setText('tipContext',c==='—'?'Контекст: немає маркера':'Контекст: '+c);setText('tipReason',shortReason(r));tip.style.borderLeftColor=COLORS[r.state]||COLORS.UNKNOWN;tip.classList.remove('hidden')
+}
+function hideTooltip(){const tip=$('pointTooltip');if(tip)tip.classList.add('hidden')}
+function positionTooltip(hx,cssW){const tip=$('pointTooltip');if(!tip||tip.classList.contains('hidden'))return;const tw=Math.min(tip.offsetWidth||220,cssW-20);let left=hx+12;if(left+tw>cssW-10)left=hx-tw-12;left=clamp(left,10,Math.max(10,cssW-tw-10));tip.style.left=`${left}px`}
 function renderTotals(){const box=$('stateTotals');if(!rows.length){box.innerHTML='';return}const c={};rows.forEach(r=>c[r.state]=(c[r.state]||0)+1);const order=['REST','MOVEMENT','RECOVERY','AUTONOMIC_LOAD','SLEEP','UNKNOWN'];box.innerHTML=order.filter(k=>c[k]).map(k=>`<div class="total-item"><span>${META[k].label}</span><b>${fmtDuration(c[k]*5)}</b></div>`).join('')}
 function fmtDuration(min){if(min<60)return `${min} хв`;const h=Math.floor(min/60),m=min%60;return m?`${h} год ${m} хв`:`${h} год`}
 function updateQuality(){if(!rows.length){$('dataQuality').textContent='Немає даних';return}const h=rows.filter(r=>Number.isFinite(r.avgHr)).length/rows.length,m=rows.filter(r=>Number.isFinite(r.motion)).length/rows.length,v=rows.filter(r=>r.hrvValid).length;let q=h>.9&&m>.85?'Добре':'Обмежено';$('dataQuality').textContent=`${q} · HR ${Math.round(h*100)}% · рух ${Math.round(m*100)}% · HRV ${v} вік.`}
@@ -109,10 +123,9 @@ function setText(id,v){$(id).textContent=v}
 
 function renderChart(){
   const wrap=canvas.parentElement,cssW=Math.max(300,wrap.clientWidth),cssH=parseInt(getComputedStyle(canvas).height)||440,dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);
-  if(!rows.length){$('chartEmpty').classList.remove('hidden');return}$('chartEmpty').classList.add('hidden');
+  if(!rows.length){$('chartEmpty').classList.remove('hidden');hideTooltip();return}$('chartEmpty').classList.add('hidden');
   const L=46,R=12,T=16,B=34,W=cssW-L-R,H=cssH-T-B,x0=rangeStart(),x1=dayEnd(),x=ts=>L+(ts-x0)/(x1-x0)*W;
-  // subtle state background
-  rows.forEach(r=>{const xx=x(r.ts),next=x(Math.min(x1,r.ts+300000));ctx.globalAlpha=.08;ctx.fillStyle=COLORS[r.state]||COLORS.UNKNOWN;ctx.fillRect(xx,T,Math.max(1,next-xx),H);if(r.context?.meal){ctx.globalAlpha=.035;ctx.fillStyle=COLORS.meal;ctx.fillRect(xx,T,Math.max(1,next-xx),H)}});ctx.globalAlpha=1;
+  rows.forEach(r=>{const xx=x(r.ts),next=x(Math.min(x1,r.ts+300000));ctx.globalAlpha=.09;ctx.fillStyle=COLORS[r.state]||COLORS.UNKNOWN;ctx.fillRect(xx,T,Math.max(1,next-xx),H);if(r.context?.meal){ctx.globalAlpha=.035;ctx.fillStyle=COLORS.meal;ctx.fillRect(xx,T,Math.max(1,next-xx),H)}});ctx.globalAlpha=1;
   const active=[];if(layers.load)active.push('load');if(layers.hr)active.push('hr');if(layers.motion)active.push('motion');if(layers.hrv)active.push('hrv');if(layers.events)active.push('events');
   const weights={load:1.25,hr:1.05,motion:.8,hrv:.8,events:.42},total=active.reduce((s,k)=>s+weights[k],0),gap=8,avail=H-gap*Math.max(0,active.length-1);let y=T;
   const lanes={};active.forEach(k=>{const h=avail*weights[k]/total;lanes[k]={top:y,h};y+=h+gap});
@@ -122,7 +135,7 @@ function renderChart(){
   if(lanes.motion)drawSeries(ctx,lanes.motion,L,W,x,'motion');
   if(lanes.hrv)drawSeries(ctx,lanes.hrv,L,W,x,'hrv');
   if(lanes.events)drawEvents(ctx,lanes.events,L,W,x,x0,x1);
-  if(hoverIndex!==null&&rows[hoverIndex]){const hx=x(rows[hoverIndex].ts);ctx.strokeStyle='rgba(255,255,255,.72)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(hx,T);ctx.lineTo(hx,T+H);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(hx,T+H+8,3,0,Math.PI*2);ctx.fill()}
+  if(hoverIndex!==null&&rows[hoverIndex]){const hx=x(rows[hoverIndex].ts);ctx.strokeStyle='rgba(255,255,255,.82)';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(hx,T);ctx.lineTo(hx,T+H);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(hx,T+H+8,3.4,0,Math.PI*2);ctx.fill();positionTooltip(hx,cssW)}
   canvas._chartGeom={L,R,T,B,W,H,x0,x1};
 }
 function laneTitle(ctx,lane,text,right=''){ctx.fillStyle='#8fa0bd';ctx.font='700 10px system-ui';ctx.fillText(text,4,lane.top+11);if(right){ctx.textAlign='right';ctx.fillText(right,canvas.clientWidth-10,lane.top+11);ctx.textAlign='left'}}
