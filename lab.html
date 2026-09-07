@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1023">
+  <title>HealthLab · LAB</title>
+  <link rel="stylesheet" href="./lab.css">
+</head>
+<body>
+<main class="lab-shell">
+  <header class="lab-topbar">
+    <a class="back-link" href="./index.html">‹ Today</a>
+    <div><div class="eyebrow">HEALTHLAB METRICS REGISTRY</div><h1>LAB</h1></div>
+    <button id="refreshLab" class="icon-btn" aria-label="Оновити">↻</button>
+  </header>
+
+  <section class="lab-intro card">
+    <b>PHYSICAL SIGNAL → STANDARDIZED METRIC → VENDOR INTERPRETATION</b>
+    <p>Одне місце для всіх показників HealthLab. Vendor-derived і HealthLab-derived значення не зливаються в одну цифру.</p>
+  </section>
+
+  <section class="date-card card">
+    <div class="date-nav">
+      <button id="prevDay" aria-label="Попередній день">‹</button>
+      <button id="selectedDate" class="date-main">—</button>
+      <button id="nextDay" aria-label="Наступний день">›</button>
+    </div>
+    <button id="todayBtn" class="today-btn">Сьогодні</button>
+    <div class="period-label">Порівняння / середнє за період, що закінчується вибраним днем</div>
+    <div id="labPeriods" class="period-pills">
+      <button class="active" data-days="1">1 день</button>
+      <button data-days="7">7 днів</button>
+      <button data-days="10">10 днів</button>
+      <button data-days="30">30 днів</button>
+    </div>
+    <div id="coverage" class="coverage">—</div>
+  </section>
+
+  <section class="filters card">
+    <div class="filter-title">РІВЕНЬ ПОХОДЖЕННЯ</div>
+    <div id="typeFilters" class="filter-pills">
+      <button class="active" data-type="ALL">Усі</button>
+      <button data-type="1">T1 · Physical</button>
+      <button data-type="2">T2 · Derived</button>
+      <button data-type="3">T3 · Vendor</button>
+    </div>
+  </section>
+
+  <section class="lab-key card">
+    <div><span class="tag t1">T1</span><b>Physical / directly measured</b><small>RAW · PRIMARY · DEVICE-PROCESSED</small></div>
+    <div><span class="tag t2">T2</span><b>Standardized derived</b><small>HealthLab або чітко позначений source algorithm</small></div>
+    <div><span class="tag t3">T3</span><b>Vendor / composite</b><small>WHOOP, Garmin та інші proprietary scores</small></div>
+  </section>
+
+  <div id="labGroups" class="lab-groups"></div>
+  <div id="labStatus" class="status">Завантаження LAB…</div>
+</main>
+
+<section id="metricDetail" class="metric-detail hidden">
+  <div class="detail-inner">
+    <div class="detail-head"><div><div id="detailType" class="eyebrow">—</div><h2 id="detailTitle">—</h2></div><button id="closeDetail">Закрити</button></div>
+    <div id="detailValue" class="detail-value">—</div>
+    <div id="detailMeta" class="detail-grid"></div>
+    <p id="detailNote" class="detail-note"></p>
+  </div>
+</section>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="./index.html"><span>▦</span><b>Today</b></a>
+  <a class="nav-item active" href="./lab.html"><span>⚗</span><b>LAB</b></a>
+  <a class="nav-item" href="./index.html#sleep"><span>☾</span><b>Sleep</b></a>
+  <a class="nav-item" href="./index.html#events"><span>＋</span><b>Події</b></a>
+  <a class="nav-item" href="./index.html#more"><span>•••</span><b>More</b></a>
+</nav>
+
+<script src="./lab.js"></script>
+</body>
+</html>
