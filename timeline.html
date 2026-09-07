@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1023">
+  <title>HealthLab · Хронологія</title>
+  <link rel="stylesheet" href="./timeline.css?v=20260907-1">
+</head>
+<body>
+<main class="timeline-shell">
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">HEALTHLAB · STATE LAB</div>
+      <h1>Хронологія стану</h1>
+    </div>
+    <button id="refreshBtn" class="icon-btn" aria-label="Оновити">↻</button>
+  </header>
+
+  <section class="card date-card">
+    <div class="date-nav">
+      <button id="prevDay" aria-label="Попередній день">‹</button>
+      <button id="selectedDate" class="date-main">—</button>
+      <button id="nextDay" aria-label="Наступний день">›</button>
+    </div>
+    <button id="todayBtn" class="today-btn">Сьогодні</button>
+    <div id="rangeButtons" class="range-buttons">
+      <button data-hours="24" class="active">24 год</button>
+      <button data-hours="12">12 год</button>
+      <button data-hours="6">6 год</button>
+      <button data-hours="3">3 год</button>
+    </div>
+    <div id="rangeCaption" class="muted">—</div>
+  </section>
+
+  <section class="card state-summary">
+    <div class="summary-head">
+      <div>
+        <div class="eyebrow">СТАН У ВИБРАНІЙ ТОЧЦІ</div>
+        <div class="state-line"><span id="stateDot" class="state-dot unknown"></span><b id="stateName">—</b></div>
+      </div>
+      <div class="load-score"><span>Навантаження HL</span><b id="loadScore">—</b><small>/100</small></div>
+    </div>
+    <div class="summary-grid">
+      <div><span>Час</span><b id="pointTime">—</b></div>
+      <div><span>Пульс</span><b id="pointHr">—</b></div>
+      <div><span>Рух</span><b id="pointMotion">—</b></div>
+      <div><span>HRV / RMSSD</span><b id="pointHrv">—</b></div>
+    </div>
+    <div id="contextLine" class="context-line">Контекст: —</div>
+    <div id="reasonLine" class="reason-line">Завантаження…</div>
+  </section>
+
+  <section class="card layer-card">
+    <div class="card-title">Що показувати</div>
+    <div id="layerButtons" class="layer-buttons">
+      <button class="on" data-layer="load">Навантаження HL</button>
+      <button class="on" data-layer="hr">Пульс</button>
+      <button class="on" data-layer="motion">Рух</button>
+      <button data-layer="hrv">HRV</button>
+      <button class="on" data-layer="events">Події / їжа</button>
+      <button class="future" data-layer="garminStress">Garmin Stress</button>
+      <button class="future" data-layer="bodyBattery">Body Battery</button>
+      <button class="future" data-layer="glucose">Глюкоза</button>
+    </div>
+    <div id="layerHint" class="muted">Натисни на параметр, щоб увімкнути або вимкнути його шар.</div>
+  </section>
+
+  <section class="chart-card card">
+    <div class="chart-head">
+      <div><div class="eyebrow">ОДНА ЧАСОВА ВІСЬ</div><h2>Організм протягом дня</h2></div>
+      <span id="dataQuality" class="quality-badge">—</span>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="timelineChart"></canvas>
+      <div id="chartEmpty" class="chart-empty hidden">Немає достатніх даних у цьому часовому вікні.</div>
+    </div>
+    <div class="legend">
+      <span><i class="rest"></i>Відпочинок</span>
+      <span><i class="move"></i>Фізичне навантаження</span>
+      <span><i class="recovery"></i>Відновлення</span>
+      <span><i class="load"></i>Автономне навантаження</span>
+      <span><i class="sleep"></i>Сон</span>
+      <span><i class="unknown"></i>Невідомо</span>
+    </div>
+    <div class="chart-help">Торкнись або проведи пальцем по графіку — всі шари переходять до одного й того самого моменту часу.</div>
+  </section>
+
+  <section class="card day-readout">
+    <div class="card-title">Що HealthLab бачить у цьому вікні</div>
+    <div id="stateTotals" class="totals-grid"></div>
+    <p class="research-note"><b>Дослідницька модель.</b> «Автономне навантаження» не означає автоматично емоційний стрес. HealthLab окремо враховує рух, післярухове відновлення, їжу та якість RR/HRV. Garmin і майбутня глюкоза будуть незалежними шарами для навчання й перевірки.</p>
+  </section>
+
+  <div id="status" class="status">Завантаження…</div>
+</main>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="./index.html"><span>▦</span><b>Сьогодні</b></a>
+  <a class="nav-item active" href="./timeline.html"><span>≋</span><b>Хронологія</b></a>
+  <a class="nav-item" href="./lab.html"><span>⚗</span><b>LAB</b></a>
+  <a class="nav-item" href="./index.html#events"><span>＋</span><b>Події</b></a>
+  <a class="nav-item" href="./index.html#more"><span>•••</span><b>Ще</b></a>
+</nav>
+
+<script src="./timeline.js?v=20260907-1"></script>
+</body>
+</html>
