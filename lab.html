@@ -6,18 +6,19 @@
   <meta name="theme-color" content="#0b1023">
   <title>HealthLab · LAB</title>
   <link rel="stylesheet" href="./lab.css">
+  <link rel="stylesheet" href="./lab-reference.css">
 </head>
 <body>
 <main class="lab-shell">
   <header class="lab-topbar">
-    <a class="back-link" href="./index.html">‹ Today</a>
-    <div><div class="eyebrow">HEALTHLAB METRICS REGISTRY</div><h1>LAB</h1></div>
+    <a class="back-link" href="./index.html">‹ Сьогодні</a>
+    <div><div class="eyebrow">РЕЄСТР ПОКАЗНИКІВ HEALTHLAB</div><h1>LAB</h1></div>
     <button id="refreshLab" class="icon-btn" aria-label="Оновити">↻</button>
   </header>
 
   <section class="lab-intro card">
-    <b>PHYSICAL SIGNAL → STANDARDIZED METRIC → VENDOR INTERPRETATION</b>
-    <p>Одне місце для всіх показників HealthLab. Vendor-derived і HealthLab-derived значення не зливаються в одну цифру.</p>
+    <b>ФІЗИЧНИЙ СИГНАЛ → РОЗРАХОВАНИЙ ПОКАЗНИК → ОЦІНКА ВИРОБНИКА</b>
+    <p>Одне місце для всіх показників HealthLab. Значення виробника й розрахунки HealthLab завжди показуються окремо.</p>
   </section>
 
   <section class="date-card card">
@@ -38,19 +39,26 @@
   </section>
 
   <section class="filters card">
-    <div class="filter-title">РІВЕНЬ ПОХОДЖЕННЯ</div>
+    <div class="filter-title">ПОХОДЖЕННЯ ПОКАЗНИКА</div>
     <div id="typeFilters" class="filter-pills">
       <button class="active" data-type="ALL">Усі</button>
-      <button data-type="1">T1 · Physical</button>
-      <button data-type="2">T2 · Derived</button>
-      <button data-type="3">T3 · Vendor</button>
+      <button data-type="1">T1 · Фізичні</button>
+      <button data-type="2">T2 · Розраховані</button>
+      <button data-type="3">T3 · Виробник</button>
     </div>
   </section>
 
   <section class="lab-key card">
-    <div><span class="tag t1">T1</span><b>Physical / directly measured</b><small>RAW · PRIMARY · DEVICE-PROCESSED</small></div>
-    <div><span class="tag t2">T2</span><b>Standardized derived</b><small>HealthLab або чітко позначений source algorithm</small></div>
-    <div><span class="tag t3">T3</span><b>Vendor / composite</b><small>WHOOP, Garmin та інші proprietary scores</small></div>
+    <div><span class="tag t1">T1</span><b>Фізичні / безпосередньо виміряні</b><small>сирі дані · первинні · оброблені пристроєм</small></div>
+    <div><span class="tag t2">T2</span><b>Стандартизовані розраховані</b><small>HealthLab або чітко позначений алгоритм із відомого джерела</small></div>
+    <div><span class="tag t3">T3</span><b>Оцінки виробника / складені індекси</b><small>WHOOP, Garmin та інші власні оцінки виробників</small></div>
+  </section>
+
+  <section class="reference-wrap">
+    <div class="eyebrow">ОСОБИСТІ КОНТРОЛЬНІ ТОЧКИ</div>
+    <h2 class="reference-title">Контрольні вимірювання</h2>
+    <p class="reference-sub">Це не «норма назавжди». Тут зберігаються повторювані контрольні епізоди з відомими умовами, джерелом і якістю. Із кількох таких епізодів HealthLab згодом будує особистий baseline.</p>
+    <div id="referenceRegistry"></div>
   </section>
 
   <div id="labGroups" class="lab-groups"></div>
@@ -67,14 +75,16 @@
 </section>
 
 <nav class="bottom-nav">
-  <a class="nav-item" href="./index.html"><span>▦</span><b>Today</b></a>
+  <a class="nav-item" href="./index.html"><span>▦</span><b>Сьогодні</b></a>
   <a class="nav-item active" href="./lab.html"><span>⚗</span><b>LAB</b></a>
-  <a class="nav-item" href="./index.html#sleep"><span>☾</span><b>Sleep</b></a>
+  <a class="nav-item" href="./index.html#sleep"><span>☾</span><b>Сон</b></a>
   <a class="nav-item" href="./index.html#events"><span>＋</span><b>Події</b></a>
-  <a class="nav-item" href="./index.html#more"><span>•••</span><b>More</b></a>
+  <a class="nav-item" href="./index.html#more"><span>•••</span><b>Ще</b></a>
 </nav>
 
 <script src="./lab.js"></script>
 <script src="./lab-fix.js"></script>
+<script src="./lab-reference.js"></script>
+<script src="./lab-uk.js"></script>
 </body>
 </html>
