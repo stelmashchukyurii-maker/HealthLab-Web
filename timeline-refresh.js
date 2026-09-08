@@ -23,3 +23,5 @@
     }
   };
 })();
+
+(()=>{const s=document.createElement('script');s.src='./mode.js?v=20260908-2';s.async=false;s.onload=()=>{if(document.readyState!=='loading'&&typeof hlInstallShell==='function'){hlInstallShell();hlInstallModeSwitch();hlSetMode('research');hlObserveSimple()}};document.head.appendChild(s)})();
