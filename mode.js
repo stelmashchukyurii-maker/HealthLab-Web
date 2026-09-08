@@ -1,146 +1,85 @@
-const HL_MODE_KEY='healthlab.ui.mode.v1';
+const HL_API='https://ttvlgfzvgjcbomdlddbn.supabase.co/functions/v1/noop-db-viewer';
 
-function hlSavedMode(){
-  const q=new URLSearchParams(location.search).get('mode');
-  if(q==='user'||q==='research')return q;
-  const s=localStorage.getItem(HL_MODE_KEY);
-  return s==='research'?'research':'user';
-}
 function hlEnsureModeCss(){
   if(document.querySelector('link[data-hl-mode-css]'))return;
-  const l=document.createElement('link');l.rel='stylesheet';l.href='./mode.css?v=20260908-1';l.dataset.hlModeCss='1';document.head.appendChild(l);
+  const l=document.createElement('link');l.rel='stylesheet';l.href='./mode.css?v=20260908-4';l.dataset.hlModeCss='1';document.head.appendChild(l);
 }
-function hlPageName(){
-  const p=(location.pathname.split('/').pop()||'index.html').toLowerCase();
-  return p||'index.html';
+function hlPageName(){return (location.pathname.split('/').pop()||'index.html').toLowerCase()}
+function hlNav(active){
+  const items=[
+    ['sleep','./index.html','🌙','Сон'],['state','./state.html','🫀','Стан'],['trend','./index.html#sleepTrend','↗','Тренди'],['events','./index.html#events','＋','Події'],['lab','./lab.html','🔬','Лаб']
+  ];
+  return `<nav class="bottom-nav hl-main-nav">${items.map(([k,href,ico,label])=>`<a class="nav-item ${active===k?'active':''}" href="${href}"><span>${ico}</span><b>${label}</b></a>`).join('')}</nav>`;
 }
-function hlSwitchMarkup(){
-  return `<div id="modeSwitchWrap" class="mode-switch-wrap">
-    <div class="mode-switch" role="group" aria-label="Режим HealthLab">
-      <button type="button" data-hl-mode="user">Користувач</button>
-      <button type="button" data-hl-mode="research">🔬 Дослідник</button>
+function hlInstallMainNav(active){
+  document.querySelectorAll('nav.bottom-nav:not(.hl-main-nav)').forEach(n=>n.classList.add('hl-old-nav'));
+  if(!document.querySelector('.hl-main-nav'))document.body.insertAdjacentHTML('beforeend',hlNav(active));
+}
+function hlSleepMarkup(){
+  return `<section id="sleepDashboard" class="sleep-dashboard">
+    <div class="eyebrow section-overline">ОСТАННЯ ЗАВЕРШЕНА НІЧ</div>
+    <article class="sleep-hero">
+      <div class="sleep-hero-top"><div id="sleepMood" class="sleep-mood">😐</div><div><h2 id="sleepTitle">Сон і відновлення</h2><small id="sleepDay" class="muted">завантаження…</small></div></div>
+      <p id="sleepSummary">Формую короткий огляд нічних показників.</p>
+    </article>
+    <div class="sleep-grid">
+      <article class="sleep-card"><span>Нічний HRV</span><b id="sleepHrv">—</b><small>мс</small></article>
+      <article class="sleep-card"><span>Сон</span><b id="sleepDuration">—</b><small>тривалість</small></article>
+      <article class="sleep-card"><span>Пульс спокою</span><b id="sleepRhr">—</b><small>уд/хв</small></article>
+      <article class="sleep-card"><span>Recovery</span><b id="sleepRecovery">—</b><small>WHOOP · vendor score</small></article>
+      <article class="sleep-card"><span>Дихання</span><b id="sleepResp">—</b><small>/хв · ніч</small></article>
     </div>
-    <div class="mode-caption" data-hl-mode-caption>—</div>
-  </div>`;
+    <article id="sleepTrend" class="sleep-direction">
+      <div class="eyebrow">НАПРЯМОК</div><h3>Тренд</h3>
+      <div id="sleepTrendSummary" class="sleep-direction-summary">Напрямок ще формується.</div>
+      <div id="sleepTrendChips" class="sleep-direction-row"></div>
+      <div class="sleep-direction-note">↑/↓ — факт зміни. Нічні значення порівнюються з нічними; денний HRV сюди не домішується.</div>
+    </article>
+    <article class="sleep-lab-link"><div><b>Потрібні всі сигнали й докази?</b><small>Хронологія, LAB, H10, якість даних і алгоритми — у лабораторії.</small></div><a href="./lab.html">🔬 Лабораторія →</a></article>
+  </section>`;
 }
-function hlInstallShell(){
-  hlEnsureModeCss();
-  const page=hlPageName(),isIndex=page==='index.html'||page==='';
-  if(!isIndex)document.body.classList.add('research-page');
-  const main=document.querySelector('main');
-  const header=main?.querySelector('header');
-  if(main&&header&&!document.getElementById('modeSwitchWrap'))header.insertAdjacentHTML('afterend',hlSwitchMarkup());
-
-  const nav=document.querySelector('nav.bottom-nav');
-  if(nav)nav.classList.add('research-nav');
-
-  if(isIndex){
-    const strap=document.querySelector('.strap-card');
-    if(strap&&!document.getElementById('userDashboard')){
-      strap.insertAdjacentHTML('afterend',`<section id="userDashboard" class="user-dashboard user-only">
-        <div class="eyebrow section-overline">СЬОГОДНІ · ПРОСТО</div>
-        <article class="user-hero">
-          <div class="user-hero-top"><div id="userMood" class="user-mood">😐</div><div><h2 id="userStateTitle">Завантаження…</h2><small class="muted">HealthLab · поточний стан</small></div></div>
-          <p id="userStateText">Формую простий висновок із доступних сигналів.</p>
-          <a class="user-detail-link" href="./timeline.html" data-open-research>Детальніше у Хронології →</a>
-        </article>
-        <div id="userHealth" class="user-grid">
-          <article class="user-card"><span>Пульс зараз</span><b id="userHr">—</b><small>поточний 5-хв рівень</small></article>
-          <article class="user-card"><span>Нічний HRV</span><b id="userHrv">—</b><small>напрямок дивись нижче</small></article>
-          <article class="user-card"><span>Дихання вночі</span><b id="userResp">—</b><small>WHOOP</small></article>
-          <article class="user-card"><span>Пояснення</span><b>Без технічного шуму</b><small>деталі завжди доступні у режимі Дослідник</small></article>
-        </div>
-        <article id="userTrend" class="user-direction">
-          <div class="eyebrow">НАПРЯМОК</div><h3>Куди рухаємося</h3>
-          <div id="userTrendSummary" class="user-direction-summary">Напрямок ще формується.</div>
-          <div id="userTrendChips" class="user-direction-row"></div>
-          <div class="user-direction-note">Стрілка показує факт зміни. Підвищення навантаження не позначається автоматично як «добре» або «погано».</div>
-        </article>
-      </section>`);
-    }
-    const technical=[
-      document.getElementById('pulseChart')?.closest('section'),
-      document.getElementById('stateLab'),
-      document.getElementById('trendLab'),
-      document.getElementById('dbNav')?.closest('section'),
-      document.querySelector('.metric-grid'),
-      document.querySelector('.mini-card'),
-      document.getElementById('database'),
-      document.getElementById('status')
-    ].filter(Boolean);
-    technical.forEach(el=>el.classList.add('research-only'));
-
-    if(nav&&!document.querySelector('nav.user-nav')){
-      nav.insertAdjacentHTML('afterend',`<nav class="bottom-nav user-nav user-only">
-        <a class="nav-item active" href="./index.html?mode=user"><span>▦</span><b>Сьогодні</b></a>
-        <a class="nav-item" href="#userTrend"><span>↗</span><b>Тренди</b></a>
-        <button class="nav-item" id="userEventsNav"><span>＋</span><b>Події</b></button>
-        <a class="nav-item" href="#userHealth"><span>♡</span><b>Здоров’я</b></a>
-        <a class="nav-item" href="#modeSwitchWrap"><span>•••</span><b>Ще</b></a>
-      </nav>`);
-    }
-    document.getElementById('userEventsNav')?.addEventListener('click',()=>window.openJournal?.());
-  }
+async function hlApi(params){const u=new URL(HL_API);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const d=await r.json();if(d?.error)throw Error(d.error);return d}
+function hlNum(v){const n=Number(v);return Number.isFinite(n)?n:null}
+function hlSleepFormat(min){if(!Number.isFinite(min))return '—';const m=Math.round(min);return `${Math.floor(m/60)}г ${String(m%60).padStart(2,'0')}хв`}
+async function hlLoadSleep(){
+  try{
+    const d=await hlApi({api:'table',name:'dailyMetric',limit:3});const rows=Array.isArray(d)?d:(d.rows||[]);const m=rows[0];if(!m)throw Error('Немає dailyMetric');
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+    const h=hlNum(m.avgHrv),s=hlNum(m.totalSleepMin),rhr=hlNum(m.restingHr),rec=hlNum(m.recovery),resp=hlNum(m.respRateBpm);
+    set('sleepHrv',h===null?'—':Math.round(h));set('sleepDuration',hlSleepFormat(s));set('sleepRhr',rhr===null?'—':Math.round(rhr));set('sleepRecovery',rec===null?'—':Math.round(rec)+'%');set('sleepResp',resp===null?'—':resp.toFixed(1));
+    if(m.day){const dt=new Date(m.day+'T12:00:00');set('sleepDay',dt.toLocaleDateString('uk-UA',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}))}
+  }catch(e){const s=document.getElementById('sleepSummary');if(s)s.textContent='Нічні дані тимчасово недоступні: '+e.message}
 }
-function hlSetMode(mode,{navigate=false}={}){
-  mode=mode==='research'?'research':'user';
-  localStorage.setItem(HL_MODE_KEY,mode);
-  const isResearchPage=document.body.classList.contains('research-page');
-  if(isResearchPage&&mode==='user'){
-    location.href='./index.html?mode=user';
-    return;
-  }
-  document.body.classList.toggle('mode-user',mode==='user');
-  document.body.classList.toggle('mode-research',mode==='research');
-  document.querySelectorAll('[data-hl-mode]').forEach(el=>el.classList.toggle('active',el.dataset.hlMode===mode));
-  document.querySelectorAll('[data-hl-mode-caption]').forEach(el=>el.textContent=mode==='user'?'Простий щоденний огляд':'Повні сигнали, якість і дослідницькі інструменти');
-  if(mode==='research'){
-    requestAnimationFrame(()=>{
-      try{window.renderPulse?.();window.renderStateLab?.();window.dispatchEvent(new Event('resize'));}catch{}
-    });
-  }
-  if(navigate&&mode==='research'&&hlPageName()==='index.html')location.hash='research';
-}
-function hlInstallModeSwitch(){
-  document.querySelectorAll('[data-hl-mode]').forEach(el=>{
-    el.addEventListener('click',ev=>{ev.preventDefault();hlSetMode(el.dataset.hlMode)});
+function hlTrendFriendly(){
+  const src=document.getElementById('trendSummary'),box=document.getElementById('sleepTrendSummary'),chips=document.getElementById('sleepTrendChips'),mood=document.getElementById('sleepMood'),summary=document.getElementById('sleepSummary');
+  if(!src||!box||!chips||!mood||!summary)return;
+  const txt=src.textContent.trim();if(!txt||txt.includes('Формую')||txt.includes('недоступний')||txt.includes('рано')){box.textContent='Ще збираємо достатньо нічних даних.';chips.innerHTML='';mood.textContent='😐';summary.textContent='Нічні показники є; для надійного напрямку потрібно більше історії.';return}
+  const parts=txt.split('·').map(x=>x.trim()).filter(Boolean),out=[],friendly=[];let fav=0,unfav=0;
+  parts.forEach(p=>{const m=p.match(/(.+?)\s*([↑↓→])$/);if(!m)return;const name=m[1].trim(),a=m[2];const icon=a==='↑'?'↗':a==='↓'?'↘':'→';out.push(`<span class="sleep-direction-chip">${name} ${icon}</span>`);
+    if(/HRV/i.test(name)){friendly.push(a==='↑'?'HRV вище':a==='↓'?'HRV нижче':'HRV стабільний');if(a==='↑')fav++;if(a==='↓')unfav++}
+    else if(/пульс/i.test(name)){friendly.push(a==='↓'?'пульс спокою нижче':a==='↑'?'пульс спокою вище':'пульс спокою стабільний');if(a==='↓')fav++;if(a==='↑')unfav++}
+    else if(/сон/i.test(name)){friendly.push(a==='↑'?'сну більше':a==='↓'?'сну менше':'сон стабільний');if(a==='↑')fav++;if(a==='↓')unfav++}
+    else if(/Recovery/i.test(name)){if(a==='↑')fav++;if(a==='↓')unfav++}
   });
-  document.querySelectorAll('[data-open-research]').forEach(el=>el.addEventListener('click',()=>localStorage.setItem(HL_MODE_KEY,'research')));
-}
-function hlMoodForState(state){
-  const s=(state||'').toUpperCase();
-  if(s.includes('СОН'))return ['😴','Сон','Організм зараз у стані сну.'];
-  if(s.includes('ВІДПОЧИНОК'))return ['🙂','Спокійний стан','Навантаження зараз близьке до спокійного рівня.'];
-  if(s.includes('РУХ'))return ['🚶','Фізичне навантаження','Зараз переважає фізична активність.'];
-  if(s.includes('ВІДНОВЛЕНН'))return ['🙂','Відновлення','Організм відновлюється після недавнього руху.'];
-  if(s.includes('АВТОНОМНЕ'))return ['😕','Навантаження на організм вище','Є ознаки підвищеного автономного навантаження. Це не обов’язково емоційний стрес.'];
-  return ['😐','Даних недостатньо','HealthLab поки не має достатньо якісних даних для простого висновку.'];
-}
-function hlUpdateUserState(){
-  const src=document.getElementById('stateNow'),mood=document.getElementById('userMood'),title=document.getElementById('userStateTitle'),text=document.getElementById('userStateText');
-  if(!src||!mood||!title||!text)return;
-  const [m,t,d]=hlMoodForState(src.textContent);mood.textContent=m;title.textContent=t;text.textContent=d;
-  const hr=document.getElementById('pulseNow')?.textContent?.trim(),hrv=document.getElementById('hrvToday')?.textContent?.trim(),resp=document.getElementById('respToday')?.textContent?.trim();
-  const set=(id,v,suffix)=>{const el=document.getElementById(id);if(el)el.textContent=v&&v!=='—'?`${v}${suffix}`:'—'};
-  set('userHr',hr,' уд/хв');set('userHrv',hrv,' мс');set('userResp',resp,' /хв');
-}
-function hlTrendChip(label,arrow){const icon=arrow==='↑'?'↗':arrow==='↓'?'↘':'→';return `<span class="user-direction-chip">${label} ${icon}</span>`}
-function hlUpdateUserTrend(){
-  const src=document.getElementById('trendSummary'),box=document.getElementById('userTrendSummary'),chips=document.getElementById('userTrendChips');if(!src||!box||!chips)return;
-  const txt=src.textContent.trim();if(!txt||txt.includes('Формую')||txt.includes('недоступний')){box.textContent='Напрямок ще формується.';chips.innerHTML='';return}
-  const parts=txt.split('·').map(x=>x.trim()).filter(Boolean),friendly=[],out=[];
-  parts.forEach(p=>{const m=p.match(/(.+?)\s*([↑↓→])$/);if(!m)return;const name=m[1].trim(),arrow=m[2];out.push(hlTrendChip(name,arrow));if(/HRV/i.test(name))friendly.push(arrow==='↑'?'HRV покращується':arrow==='↓'?'HRV знижується':'HRV стабільний');else if(/пульс/i.test(name))friendly.push(arrow==='↓'?'пульс спокою нижчий':arrow==='↑'?'пульс спокою вищий':'пульс спокою стабільний');else if(/сон/i.test(name))friendly.push(arrow==='↑'?'сну більше':arrow==='↓'?'сну менше':'сон стабільний')});
   box.textContent=friendly.length?friendly.join(' · '):txt;chips.innerHTML=out.join('');
+  if(fav>=2&&fav>unfav){mood.textContent='🙂';summary.textContent='За доступними нічними трендами напрямок зараз переважно сприятливий.'}
+  else if(unfav>=2&&unfav>fav){mood.textContent='😕';summary.textContent='Кілька нічних показників рухаються в менш сприятливий бік — варто стежити за трендом.'}
+  else{mood.textContent='😐';summary.textContent='Нічні показники мають змішаний або стабільний напрямок.'}
 }
-function hlObserveSimple(){
-  ['stateNow','pulseNow','hrvToday','respToday','trendSummary'].forEach(id=>{const el=document.getElementById(id);if(!el)return;new MutationObserver(()=>{hlUpdateUserState();hlUpdateUserTrend()}).observe(el,{childList:true,subtree:true,characterData:true})});
-  hlUpdateUserState();hlUpdateUserTrend();
+function hlObserveSleep(){['trendSummary'].forEach(id=>{const e=document.getElementById(id);if(e)new MutationObserver(hlTrendFriendly).observe(e,{childList:true,subtree:true,characterData:true})});hlTrendFriendly()}
+function hlInstallSleep(){
+  document.body.classList.add('hl-sleep-page');const h=document.querySelector('.topbar h1');if(h)h.textContent='Сон';const eye=document.querySelector('.topbar .eyebrow');if(eye)eye.textContent='HEALTHLAB · НІЧНИЙ ОГЛЯД';
+  const strap=document.querySelector('.strap-card');if(strap&&!document.getElementById('sleepDashboard'))strap.insertAdjacentHTML('afterend',hlSleepMarkup());
+  [document.getElementById('pulseChart')?.closest('section'),document.getElementById('stateLab'),document.getElementById('trendLab'),document.getElementById('dbNav')?.closest('section'),document.querySelector('.metric-grid'),document.querySelector('.mini-card'),document.getElementById('database'),document.getElementById('status')].filter(Boolean).forEach(e=>e.classList.add('hl-legacy-research'));
+  hlInstallMainNav('sleep');hlLoadSleep();hlObserveSleep();
+  const rb=document.getElementById('refreshBtn');rb?.addEventListener('click',()=>hlLoadSleep());
+  const openEvents=()=>{if(typeof window.openJournal==='function')window.openJournal()};if(location.hash==='#events')setTimeout(openEvents,80);window.addEventListener('hashchange',()=>{if(location.hash==='#events')openEvents()});
 }
+function hlInstallResearch(){document.body.classList.add('hl-research-page');hlInstallMainNav('lab')}
+function hlInstallShell(){hlEnsureModeCss();const p=hlPageName();if(p==='index.html'||p==='')hlInstallSleep();else if(p==='lab.html'||p==='timeline.html')hlInstallResearch()}
+function hlInstallModeSwitch(){}
+function hlSetMode(){}
+function hlSavedMode(){return 'sleep'}
+function hlObserveSimple(){if(hlPageName()==='index.html'||hlPageName()==='')hlObserveSleep()}
 
-document.addEventListener('DOMContentLoaded',()=>{
-  hlInstallShell();
-  hlInstallModeSwitch();
-  const isResearchPage=document.body.classList.contains('research-page');
-  hlSetMode(isResearchPage?'research':hlSavedMode());
-  hlObserveSimple();
-});
+document.addEventListener('DOMContentLoaded',hlInstallShell);
