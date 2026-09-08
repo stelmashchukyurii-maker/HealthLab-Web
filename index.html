@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0b1023">
   <title>HealthLab</title>
   <link rel="stylesheet" href="./style.css?v=20260907-2">
+  <link rel="stylesheet" href="./trend.css?v=20260908-1">
 </head>
 <body>
 <main class="app-shell">
@@ -74,6 +75,19 @@
     </article>
   </section>
 
+  <section id="trendLab" class="trend-lab">
+    <div class="cards-head trend-head">
+      <div><div class="eyebrow">НАПРЯМОК</div><h2 class="trend-title">Тренд 7 днів</h2></div>
+      <span id="trendCoverage" class="badge">завантаження…</span>
+    </div>
+    <article class="trend-card">
+      <div id="trendSummary" class="trend-summary">Формую напрямок за доступними даними…</div>
+      <div id="trendPeriod" class="trend-period muted">—</div>
+      <div id="trendRows" class="trend-rows"></div>
+      <div id="trendNote" class="trend-note">↑/↓ показує факт зміни; оцінка «сприятливіше / менш сприятливо» розраховується окремо.</div>
+    </article>
+  </section>
+
   <section class="cards-head"><div class="eyebrow">ПОКАЗНИКИ</div><button id="dbNav" class="customise">☷ БАЗА</button></section>
   <section class="metric-grid">
     <article class="metric-card"><div class="metric-label">НІЧНИЙ HRV</div><div><b id="hrvToday">—</b><span> мс</span></div><small id="hrvDay" class="muted">WHOOP · минула ніч</small></article>
@@ -122,5 +136,6 @@ STATE_META.UNKNOWN.label='НЕВІДОМО';
 // Після завершення їжі контекст не обривається: зберігаємо його до 3 годин.
 findContext=function(ts){let latest=null;for(const e of stateEvents){if(e.ts>ts)break;if(['food','meal_start','meal_end'].includes(e.event_type)&&ts-e.ts<=3*3600000)latest=e}if(!latest)return null;const age=Math.round((ts-latest.ts)/60000);const base=latest.event_type==='meal_end'?'ПІСЛЯ ЇЖІ · від завершення':latest.event_type==='meal_start'?'ПІСЛЯ ЇЖІ · від початку':'ПІСЛЯ ЇЖІ';return{kind:'POST_MEAL',label:`${base} +${age} хв`}}
 </script>
+<script src="./trend.js?v=20260908-1"></script>
 </body>
 </html>
