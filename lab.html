@@ -7,19 +7,30 @@
   <title>HealthLab · LAB</title>
   <link rel="stylesheet" href="./lab.css?v=20260907-2">
   <link rel="stylesheet" href="./lab-reference.css?v=20260907-2">
+  <link rel="stylesheet" href="./mode.css?v=20260908-5">
 </head>
 <body>
 <main class="lab-shell">
   <header class="lab-topbar">
-    <a class="back-link" href="./index.html">‹ Сьогодні</a>
-    <div><div class="eyebrow">РЕЄСТР ПОКАЗНИКІВ HEALTHLAB</div><h1>LAB</h1></div>
+    <a class="back-link" href="./index.html">‹ Сон</a>
+    <div><div class="eyebrow">ЛАБОРАТОРІЯ HEALTHLAB</div><h1>Лабораторія</h1></div>
     <button id="refreshLab" class="icon-btn" aria-label="Оновити">↻</button>
   </header>
 
-  <section class="lab-intro card">
+  <section class="lab-route-grid" aria-label="Розділи лабораторії">
+    <a class="lab-route primary" href="./timeline.html">
+      <strong>≋ Хронологія стану</strong>
+      <small>Усі сигнали на одній часовій осі · HR · рух · HRV · події</small>
+    </a>
+    <a class="lab-route" href="#labRegistry">
+      <strong>⚗ Показники LAB</strong>
+      <small>Джерела · якість · тип показника · контрольні вимірювання</small>
+    </a>
+  </section>
+
+  <section class="lab-intro card" id="labRegistry">
     <b>ФІЗИЧНИЙ СИГНАЛ → РОЗРАХОВАНИЙ ПОКАЗНИК → ОЦІНКА ВИРОБНИКА</b>
     <p>Одне місце для всіх показників HealthLab. Значення виробника й розрахунки HealthLab завжди показуються окремо.</p>
-    <p><a href="./timeline.html" style="color:#7bdcff;font-weight:800;text-decoration:none">≋ Відкрити спільну хронологію всіх показників →</a></p>
   </section>
 
   <section class="date-card card">
@@ -87,6 +98,6 @@
 <script src="./lab-fix.js?v=20260907-2"></script>
 <script src="./lab-reference.js?v=20260907-2"></script>
 <script src="./lab-uk.js?v=20260907-2"></script>
-<script src="./mode.js?v=20260908-3"></script>
+<script src="./mode.js?v=20260908-4"></script>
 </body>
 </html>
