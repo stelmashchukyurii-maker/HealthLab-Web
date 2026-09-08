@@ -4,8 +4,8 @@ const TREND_METRICS=[
   {key:'avgHrv',label:'Нічний HRV',short:'HRV',unit:'мс',digits:0,better:'up',threshold:5,source:'WHOOP · похідний показник'},
   {key:'restingHr',label:'Пульс спокою',short:'пульс спокою',unit:'уд/хв',digits:0,better:'down',threshold:3,source:'WHOOP'},
   {key:'totalSleepMin',label:'Сон',short:'сон',unit:'',digits:0,better:'up',threshold:5,source:'WHOOP',format:'sleep'},
-  {key:'recovery',label:'Recovery',short:'WHOOP Recovery',unit:'%',digits:0,better:'up',threshold:5,source:'WHOOP · vendor score'},
-  {key:'strain',label:'Навантаження',short:'навантаження',unit:'',digits:1,better:'neutral',threshold:10,source:'WHOOP · vendor strain'}
+  {key:'recovery',label:'Recovery',short:'WHOOP Recovery',unit:'%',digits:0,better:'up',threshold:5,deltaMode:'points',deltaDigits:0,source:'WHOOP · vendor score'},
+  {key:'strain',label:'Навантаження',short:'навантаження',unit:'',digits:1,better:'neutral',threshold:3,deltaMode:'points',deltaDigits:1,source:'WHOOP · vendor strain'}
 ];
 
 const trendEl=id=>document.getElementById(id);
@@ -25,7 +25,7 @@ function trendDayMs(day){
   return Number.isFinite(t)?t:null;
 }
 function trendMean(rows,key){
-  const v=rows.map(r=>Number(r[key])).filter(Number.isFinite);
+  const v=rows.map(r=>r[key]).filter(x=>x!==null&&x!==undefined&&x!=='').map(Number).filter(Number.isFinite);
   return v.length?{value:v.reduce((a,b)=>a+b,0)/v.length,n:v.length}:null;
 }
 function trendFormatValue(metric,value){
@@ -36,9 +36,9 @@ function trendFormatValue(metric,value){
   return `${value.toFixed(metric.digits)}${metric.unit?' '+metric.unit:''}`;
 }
 function trendArrow(direction){return direction==='up'?'↑':direction==='down'?'↓':'→'}
-function trendDirection(deltaPct,threshold){
-  if(!Number.isFinite(deltaPct)||Math.abs(deltaPct)<threshold)return 'flat';
-  return deltaPct>0?'up':'down';
+function trendDirection(delta,threshold){
+  if(!Number.isFinite(delta)||Math.abs(delta)<threshold)return 'flat';
+  return delta>0?'up':'down';
 }
 function trendEvaluation(metric,direction){
   if(direction==='flat')return {cls:'neutral',label:'стабільно'};
@@ -73,16 +73,20 @@ function trendRenderMetric(metric,currentRows,previousRows){
   if(!a||!b||a.n<2||b.n<2){
     return {html:`<div class="trend-row"><div><b>${trendEscape(metric.label)}</b><small>${trendEscape(metric.source)}</small></div><div class="trend-value">—</div><div class="trend-pill neutral">даних мало</div></div>`,summary:null};
   }
-  const deltaPct=b.value!==0?(a.value-b.value)/Math.abs(b.value)*100:0;
-  const direction=trendDirection(deltaPct,metric.threshold);
+  const absoluteDelta=a.value-b.value;
+  const deltaPct=b.value!==0?absoluteDelta/Math.abs(b.value)*100:0;
+  const trendDelta=metric.deltaMode==='points'?absoluteDelta:deltaPct;
+  const direction=trendDirection(trendDelta,metric.threshold);
   const evaluation=trendEvaluation(metric,direction);
-  const pctText=direction==='flat'?`${Math.abs(deltaPct).toFixed(0)}%`:`${trendArrow(direction)} ${Math.abs(deltaPct).toFixed(0)}%`;
+  const deltaText=metric.deltaMode==='points'
+    ? `${direction==='flat'?'':trendArrow(direction)+' '}${Math.abs(absoluteDelta).toFixed(metric.deltaDigits??0)} п.`
+    : `${direction==='flat'?'':trendArrow(direction)+' '}${Math.abs(deltaPct).toFixed(0)}%`;
   const html=`<div class="trend-row">
     <div class="trend-name"><b>${trendEscape(metric.label)}</b><small>${trendEscape(metric.source)}</small></div>
     <div class="trend-value"><strong>${trendEscape(trendFormatValue(metric,a.value))}</strong><small>середнє</small></div>
-    <div class="trend-change"><span class="trend-pill ${evaluation.cls}">${pctText}</span><small>${trendEscape(evaluation.label)}</small></div>
+    <div class="trend-change"><span class="trend-pill ${evaluation.cls}">${deltaText}</span><small>${trendEscape(evaluation.label)}</small></div>
   </div>`;
-  return {html,summary:{metric,direction,evaluation,deltaPct}};
+  return {html,summary:{metric,direction,evaluation,deltaPct,absoluteDelta}};
 }
 
 async function loadTrend(){
