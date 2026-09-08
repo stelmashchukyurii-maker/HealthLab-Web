@@ -2,7 +2,7 @@ const HL_API='https://ttvlgfzvgjcbomdlddbn.supabase.co/functions/v1/noop-db-view
 
 function hlEnsureModeCss(){
   if(document.querySelector('link[data-hl-mode-css]'))return;
-  const l=document.createElement('link');l.rel='stylesheet';l.href='./mode.css?v=20260908-4';l.dataset.hlModeCss='1';document.head.appendChild(l);
+  const l=document.createElement('link');l.rel='stylesheet';l.href='./mode.css?v=20260908-5';l.dataset.hlModeCss='1';document.head.appendChild(l);
 }
 function hlPageName(){return (location.pathname.split('/').pop()||'index.html').toLowerCase()}
 function hlNav(active){
