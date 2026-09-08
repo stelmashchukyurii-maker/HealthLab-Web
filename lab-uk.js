@@ -66,3 +66,5 @@ let busy=false;const mo=new MutationObserver(()=>{if(busy)return;busy=true;reque
 mo.observe(document.body,{subtree:true,childList:true,characterData:true});
 walk(document.body);
 })();
+
+(()=>{const s=document.createElement('script');s.src='./mode.js?v=20260908-2';s.async=false;s.onload=()=>{if(document.readyState!=='loading'&&typeof hlInstallShell==='function'){hlInstallShell();hlInstallModeSwitch();hlSetMode('research');hlObserveSimple()}};document.head.appendChild(s)})();
