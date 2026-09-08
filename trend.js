@@ -130,3 +130,5 @@ async function loadTrend(){
 trendEl('refreshBtn')?.addEventListener('click',loadTrend);
 loadTrend();
 setInterval(loadTrend,60000);
+
+(()=>{const s=document.createElement('script');s.src='./mode.js?v=20260908-2';s.async=false;s.onload=()=>{if(document.readyState!=='loading'&&typeof hlInstallShell==='function'){hlInstallShell();hlInstallModeSwitch();hlSetMode(document.body.classList.contains('research-page')?'research':hlSavedMode());hlObserveSimple()}};document.head.appendChild(s)})();
