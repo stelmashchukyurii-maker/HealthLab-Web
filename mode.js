@@ -29,6 +29,7 @@ function hlSleepMarkup(){
       <article class="sleep-card"><span>Recovery</span><b id="sleepRecovery">—</b><small>WHOOP · vendor score</small></article>
       <article class="sleep-card"><span>Дихання</span><b id="sleepResp">—</b><small>/хв · ніч</small></article>
     </div>
+    <article class="sleep-lab-link"><div><b>Reserve / Battery v0.1</b><small>Наш експериментальний запас ресурсу: заряд, розряд, Mobilization і Restoration.</small></div><a href="./reserve.html">🔋 Відкрити →</a></article>
     <article id="sleepTrend" class="sleep-direction">
       <div class="eyebrow">НАПРЯМОК</div><h3>Тренд</h3>
       <div id="sleepTrendSummary" class="sleep-direction-summary">Напрямок ще формується.</div>
