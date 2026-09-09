@@ -3,8 +3,20 @@
 // Morning absolute seed is temporarily taken from today's DailyMetric.recovery.
 // Charge/drain dynamics are independent and derived from HR + RMSSD + motion + sleep.
 (() => {
+  const API = 'https://ttvlgfzvgjcbomdlddbn.supabase.co/functions/v1/noop-db-viewer';
   const DAY = 86400000;
   const BUCKET = 300000;
+  const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+  const epochMs = v => { const n = Number(v); return Number.isFinite(n) ? (n < 1e12 ? n * 1000 : n) : 0; };
+  async function api(p, opt = {}) {
+    const u = new URL(API);
+    Object.entries(p).forEach(([k, v]) => u.searchParams.set(k, v));
+    const r = await fetch(u, { cache: 'no-store', ...opt });
+    if (!r.ok) throw Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (d && d.error) throw Error(d.error);
+    return d;
+  }
   const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
   const q = (xs, p) => {
     const a = xs.filter(Number.isFinite).sort((x, y) => x - y);
