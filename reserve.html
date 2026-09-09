@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1023">
+  <title>HealthLab · Reserve</title>
+  <link rel="stylesheet" href="./style.css?v=20260907-2">
+  <link rel="stylesheet" href="./reserve.css?v=20260909-1">
+</head>
+<body>
+<main class="app-shell">
+  <header class="topbar">
+    <div><div class="eyebrow">HEALTHLAB · EXPERIMENT</div><h1>Reserve / Battery</h1></div>
+    <a class="icon-btn" href="./index.html" style="text-decoration:none;display:grid;place-items:center">←</a>
+  </header>
+
+  <section class="reserve-lab">
+    <div class="cards-head">
+      <div><div class="eyebrow">ВЛАСНИЙ АЛГОРИТМ</div><h2 class="state-title">Фізіологічний резерв</h2></div>
+      <span id="reserveBadge" class="badge">завантаження…</span>
+    </div>
+
+    <article class="reserve-card">
+      <div class="reserve-hero">
+        <div>
+          <div class="metric-label">RESERVE ЗАРАЗ</div>
+          <div class="reserve-value"><b id="reserveNow">—</b><span>/100</span></div>
+        </div>
+        <div class="reserve-sub" id="reserveBaseline">персональна база…</div>
+      </div>
+      <div class="reserve-bar"><div id="reserveFill" class="reserve-fill"></div></div>
+      <div id="reserveSeed" class="reserve-sub">Формую динаміку HR / RR / рух / сон…</div>
+
+      <div class="reserve-stats">
+        <div class="reserve-stat"><span>Нічне відновлення</span><b id="reserveNight">—</b><small>умовних пунктів</small></div>
+        <div class="reserve-stat"><span>Після пробудження</span><b id="reserveDayDelta">—</b><small>зміна Reserve</small></div>
+        <div class="reserve-stat"><span>Пробудження</span><b id="reserveWake">—</b><small>за sleep-state</small></div>
+      </div>
+
+      <div class="reserve-chart-wrap"><canvas id="reserveChart"></canvas></div>
+
+      <div class="reserve-twins">
+        <div class="reserve-twin"><div class="label">Mobilization</div><b id="mobilizationNow">—</b><small>0–100 · активація зараз</small></div>
+        <div class="reserve-twin"><div class="label">Restoration</div><b id="restorationNow">—</b><small>0–100 · відновний сигнал</small></div>
+      </div>
+
+      <div class="reserve-note">v0.1: абсолютний ранковий старт поки тимчасово бере Recovery; подальший заряд/розряд рахується окремо з HR, RMSSD, руху та sleep-state. Наступна версія прибере залежність від Recovery і додасть Recovery Latency / Efficiency.</div>
+    </article>
+
+    <div class="reserve-side-grid">
+      <article class="reserve-side-card"><span>Recovery</span><b id="recoveryWeb">—</b><small>поточний NOOP score, окремо від Reserve</small></article>
+      <article class="reserve-side-card"><span>Active energy</span><b><span id="activeEnergy" style="font-size:inherit;color:inherit;letter-spacing:0;text-transform:none">—</span> kcal</b><small>активна енергія; базальний обмін сюди не входить</small></article>
+      <article class="reserve-side-card"><span>Skin temperature Δ</span><b>CAL</b><small>адаптивна персональна база; абсолютні °C після калібрування</small></article>
+    </div>
+  </section>
+
+  <div class="status">READ ONLY · експериментальний розрахунок · дані не змінюються</div>
+</main>
+<script src="./reserve.js?v=20260909-2"></script>
+</body>
+</html>
