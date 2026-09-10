@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="./style.css?v=20260907-2">
   <link rel="stylesheet" href="./trend.css?v=20260908-1">
   <link rel="stylesheet" href="./mode.css?v=20260908-5">
-  <link rel="stylesheet" href="./sleep-timeline.css?v=20260910-3">
+  <link rel="stylesheet" href="./sleep-timeline.css?v=20260910-4">
 </head>
 <body>
 <main class="app-shell">
@@ -79,7 +79,7 @@
 <script>STATE_META.RECOVERY.label='ВІДНОВЛЕННЯ';STATE_META.AUTONOMIC_LOAD.label='АВТОНОМНЕ НАВАНТАЖЕННЯ';STATE_META.UNKNOWN.label='НЕВІДОМО';findContext=function(ts){let latest=null;for(const e of stateEvents){if(e.ts>ts)break;if(['food','meal_start','meal_end'].includes(e.event_type)&&ts-e.ts<=3*3600000)latest=e}if(!latest)return null;const age=Math.round((ts-latest.ts)/60000);const base=latest.event_type==='meal_end'?'ПІСЛЯ ЇЖІ · від завершення':latest.event_type==='meal_start'?'ПІСЛЯ ЇЖІ · від початку':'ПІСЛЯ ЇЖІ';return{kind:'POST_MEAL',label:`${base} +${age} хв`}}</script>
 <script src="./trend.js?v=20260908-3"></script>
 <script src="./mode.js?v=20260908-5"></script>
-<script src="./sleep-timeline.js?v=20260910-3"></script>
+<script src="./sleep-timeline.js?v=20260910-4"></script>
 <script src="./charts-nav.js?v=20260910-1"></script>
 </body>
 </html>
