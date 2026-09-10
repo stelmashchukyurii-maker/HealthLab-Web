@@ -2,14 +2,16 @@
   const API='https://ttvlgfzvgjcbomdlddbn.supabase.co/functions/v1/noop-db-viewer';
   const COLORS={hr:'#ecf3ff',motion:'#6ed6d0',hrv:'#c895ff',light:'#4da3ff',deep:'#6857d9',rem:'#c895ff',wake:'#ff9b4a',unknown:'#68748a'};
   let section=null,canvas=null,rows=[],stages=[],session=null,sessions=[],sessionIndex=0,selectedIndex=null,loading=false;
+  const rowCache=new Map();
   const layers={hr:true,motion:true,hrv:true,stages:true};
   const el=id=>document.getElementById(id),num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
   const epochMs=v=>{const n=Number(v);return Number.isFinite(n)?(n<1e12?n*1000:n):0};
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const quantile=(a,q)=>{const x=a.filter(Number.isFinite).sort((a,b)=>a-b);if(!x.length)return null;const p=(x.length-1)*q,b=Math.floor(p),d=p-b;return x[b+1]!==undefined?x[b]+d*(x[b+1]-x[b]):x[b]};
+  const median=a=>quantile(a,.5);
   const fmtTime=ts=>new Date(ts).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
   const fmtDate=ts=>new Date(ts).toLocaleDateString('uk-UA',{weekday:'short',day:'2-digit',month:'short'});
-  const fmtDur=ms=>{const m=Math.max(0,Math.round(ms/60000));return `${Math.floor(m/60)}г ${String(m%60).padStart(2,'0')}хв`};
+  const fmtDur=ms=>{const m=Math.max(0,Math.round(ms/60000));return m<60?`${m} хв`:`${Math.floor(m/60)}г ${String(m%60).padStart(2,'0')}хв`};
   const validHrv=r=>r.rrCount>=100&&Number.isFinite(r.rmssd)&&r.rmssd>=5&&r.rmssd<=250;
 
   async function api(p,timeout=18000){
@@ -18,23 +20,75 @@
     try{const r=await fetch(u,{cache:'no-store',signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);const d=await r.json();if(d?.error)throw Error(d.error);return d}
     catch(e){if(e?.name==='AbortError')throw Error('таймаут запиту');throw e}finally{clearTimeout(t)}
   }
-  async function stateChunks(from,to){
-    const step=2*3600,out=[],parts=Math.ceil((to-from+1)/step);let done=0;
+
+  async function stateRange(from,to){
+    const status=el('sleepTimelineStatus');
+    status.textContent='HR / HRV / рух: завантажую всю ніч…';
+    let directError='';
+    try{
+      const a=await api({api:'state',from,to,bucket:300},45000);
+      if(Array.isArray(a)&&a.length)return a;
+      directError='порожня відповідь';
+    }catch(e){directError=e?.message||String(e)}
+
+    status.textContent=`Основний запит не пройшов (${directError}). Резервне завантаження…`;
+    const step=2*3600,out=[],parts=Math.ceil((to-from+1)/step);let done=0,failed=0;
     for(let s=from;s<=to;s+=step){
-      const e=Math.min(to,s+step-1);el('sleepTimelineStatus').textContent=`Дані сну: ${done}/${parts} частин…`;
-      try{const a=await api({api:'state',from:s,to:e,bucket:300});if(Array.isArray(a))out.push(...a)}
-      catch{
+      const e=Math.min(to,s+step-1);status.textContent=`Резервне завантаження: ${done}/${parts} частин…`;
+      try{
+        const a=await api({api:'state',from:s,to:e,bucket:300},30000);
+        if(Array.isArray(a))out.push(...a);
+      }catch{
+        failed++;
         const mid=Math.floor((s+e)/2);
-        for(const [a,b] of [[s,mid],[mid+1,e]]){if(b<a)continue;try{const x=await api({api:'state',from:a,to:b,bucket:300},12000);if(Array.isArray(x))out.push(...x)}catch{}}
+        for(const [a,b] of [[s,mid],[mid+1,e]]){
+          if(b<a)continue;
+          try{const x=await api({api:'state',from:a,to:b,bucket:300},22000);if(Array.isArray(x))out.push(...x)}catch{}
+        }
       }
       done++;
     }
     const map=new Map();out.forEach(r=>{const t=epochMs(r?.bucket_ts);if(t)map.set(t,r)});
-    return [...map.values()].sort((a,b)=>epochMs(a.bucket_ts)-epochMs(b.bucket_ts));
+    const merged=[...map.values()].sort((a,b)=>epochMs(a.bucket_ts)-epochMs(b.bucket_ts));
+    if(!merged.length)throw Error(`HR/HRV/рух не отримані; основний запит: ${directError}; резервних помилок: ${failed}`);
+    return merged;
   }
-  function parseStages(v){try{const a=typeof v==='string'?JSON.parse(v):v;return Array.isArray(a)?a.map(s=>({start:epochMs(s.start),end:epochMs(s.end),stage:String(s.stage||'unknown').toLowerCase()})).filter(s=>s.start&&s.end>s.start):[]}catch{return []}}
+
+  function normalizeStage(s){const x=String(s||'unknown').toLowerCase();return x==='awake'?'wake':x}
+  function parseStages(v){try{const a=typeof v==='string'?JSON.parse(v):v;return Array.isArray(a)?a.map(s=>({start:epochMs(s.start),end:epochMs(s.end),stage:normalizeStage(s.stage)})).filter(s=>s.start&&s.end>s.start):[]}catch{return []}}
   function stageAt(ts){return stages.find(x=>ts>=x.start&&ts<x.end)?.stage||'—'}
   function stageLabel(s){return ({light:'Light',deep:'Deep',rem:'REM',wake:'Awake'})[s]||'—'}
+
+  function metricsForStages(ss){
+    const sg=parseStages(ss?.stagesJSON);if(!sg.length)return null;
+    const keys=['light','deep','rem','wake'],out={};let totalSleep=0,totalSession=0;
+    keys.forEach(k=>out[k]={ms:0,episodes:0,longest:0});
+    sg.forEach(x=>{const d=Math.max(0,x.end-x.start);if(!out[x.stage])return;out[x.stage].ms+=d;out[x.stage].episodes++;out[x.stage].longest=Math.max(out[x.stage].longest,d);totalSession+=d;if(x.stage!=='wake')totalSleep+=d});
+    keys.forEach(k=>{const den=k==='wake'?totalSession:totalSleep;out[k].share=den>0?out[k].ms/den:0;out[k].continuity=out[k].ms>0?out[k].longest/out[k].ms:0;out[k].density=totalSession>0?out[k].episodes/(totalSession/3600000):0});
+    out.totalSleep=totalSleep;out.totalSession=totalSession;return out;
+  }
+  function similarity(v,ref,floor=.05){if(!Number.isFinite(v)||!Number.isFinite(ref))return null;const den=Math.max(Math.abs(ref),floor);return clamp(100-Math.abs(v-ref)/den*65,0,100)}
+  function phaseQuality(k,current,base){
+    if(k==='wake'||!current||!base?.length)return null;
+    const bShare=median(base.map(x=>x[k]?.share).filter(Number.isFinite));
+    const bCont=median(base.map(x=>x[k]?.continuity).filter(Number.isFinite));
+    const bDens=median(base.map(x=>x[k]?.density).filter(Number.isFinite));
+    const s1=similarity(current[k]?.share,bShare,.08),s2=similarity(current[k]?.continuity,bCont,.08),s3=similarity(current[k]?.density,bDens,.15);
+    if(![s1,s2,s3].every(Number.isFinite))return null;
+    return Math.round(.55*s1+.25*s2+.20*s3);
+  }
+  function renderPhaseQuality(){
+    const box=el('sleepPhaseCards');if(!box||!session)return;
+    const cur=metricsForStages(session);if(!cur){box.innerHTML='<div class="hl-phase-empty">Немає достатньої розмітки фаз.</div>';return}
+    const base=sessions.slice(sessionIndex+1,sessionIndex+8).map(metricsForStages).filter(Boolean);
+    const order=['light','deep','rem','wake'];
+    box.innerHTML=order.map(k=>{
+      const x=cur[k],q=phaseQuality(k,cur,base),qText=k==='wake'?'—':(Number.isFinite(q)?q+'/100':'ще мало бази');
+      const percent=Math.round((x.share||0)*100);
+      return `<article class="hl-phase-card ${k}"><div class="hl-phase-card-head"><span><i></i>${stageLabel(k)}</span><b>${fmtDur(x.ms)}</b></div><div class="hl-phase-grid"><div><span>Частка</span><b>${percent}%</b></div><div><span>Епізоди</span><b>${x.episodes}</b></div><div><span>Найдовший</span><b>${fmtDur(x.longest)}</b></div><div><span>${k==='wake'?'Quality':'Quality v0'}</span><b>${qText}</b></div></div></article>`;
+    }).join('');
+    const note=el('sleepPhaseQualityNote');if(note)note.textContent=base.length?`Quality v0 — структурна схожість із ${base.length} попередніми ночами: частка фази, безперервність і фрагментація. Це персональна експериментальна оцінка, не EEG/клінічний score.`:'Quality v0 з’явиться після кількох попередніх ночей із розміткою фаз.';
+  }
 
   function install(){
     const dash=el('sleepDashboard');if(!dash||el('sleepTimelineCard'))return;const grid=dash.querySelector('.sleep-grid');if(!grid)return;
@@ -43,9 +97,10 @@
       <div class="hl-sleep-timeline-head"><div><div class="eyebrow">ГРАФІКИ</div><h3>Організм під час сну</h3><small>Тільки відрізок, який зафіксовано як сон</small></div><div class="hl-sleep-head-actions"><button id="sleepTimelineRefresh" title="Оновити">↻</button><button id="sleepTimelineFullscreen" title="На весь екран">⛶</button></div></div>
       <div class="hl-sleep-daynav"><button id="sleepPrev" aria-label="Попередній сон">‹</button><div><b id="sleepSessionDate">—</b><small id="sleepTimelineRange">Остання завершена сесія</small></div><button id="sleepNext" aria-label="Наступний сон">›</button></div>
       <div class="hl-sleep-selected"><div><span>Час</span><b id="sleepPointTime">—</b></div><div><span>Фаза</span><b id="sleepPointStage">—</b></div><div><span>Пульс</span><b id="sleepPointHr">—</b></div><div><span>HRV / RMSSD</span><b id="sleepPointHrv">—</b></div><div><span>Рух</span><b id="sleepPointMotion">—</b></div><div><span>Тривалість сесії</span><b id="sleepPointDuration">—</b></div></div>
-      <div class="hl-sleep-layer-buttons"><button class="on" data-sleep-layer="hr">Пульс</button><button class="on" data-sleep-layer="motion">Рух</button><button class="on" data-sleep-layer="hrv">HRV</button><button class="on" data-sleep-layer="stages">Фази сну</button></div>
       <div class="hl-sleep-canvas-wrap"><canvas id="sleepTimelineCanvas"></canvas><div id="sleepTimelineEmpty" class="hl-sleep-empty hidden">Немає даних для цієї сесії сну.</div></div>
       <div class="hl-sleep-stage-legend"><span><i class="light"></i>Light</span><span><i class="deep"></i>Deep</span><span><i class="rem"></i>REM</span><span><i class="wake"></i>Awake</span></div>
+      <div class="hl-sleep-layer-buttons"><button class="on" data-sleep-layer="hr">Пульс</button><button class="on" data-sleep-layer="motion">Рух</button><button class="on" data-sleep-layer="hrv">HRV</button><button class="on" data-sleep-layer="stages">Фази сну</button></div>
+      <section class="hl-phase-summary"><div class="hl-phase-summary-head"><div><div class="eyebrow">ФАЗИ СНУ</div><h4>Кількість, частка і Quality v0</h4></div></div><div id="sleepPhaseCards" class="hl-phase-cards"></div><div id="sleepPhaseQualityNote" class="hl-phase-note"></div></section>
       <div class="hl-sleep-timeline-links"><a href="./timeline.html">≋ Усі графіки / Хронологія стану →</a></div>
       <div id="sleepTimelineStatus" class="hl-sleep-timeline-status">Завантаження…</div>`;
     grid.insertAdjacentElement('afterend',wrap);section=wrap;canvas=el('sleepTimelineCanvas');
@@ -58,18 +113,24 @@
   async function load(force=false){
     if(!section||loading)return;loading=true;const status=el('sleepTimelineStatus');status.textContent='Оновлюю список сну…';el('sleepTimelineRefresh').classList.add('busy');
     try{
-      if(force||!sessions.length){const d=await api({api:'sleepSessions',limit:30},12000);sessions=(Array.isArray(d)?d:[]).filter(x=>Number(x.startTs)>0&&Number(x.endTs)>Number(x.startTs));sessionIndex=Math.min(sessionIndex,Math.max(0,sessions.length-1))}
-      if(!sessions.length)throw Error('завершених sleepSession немає');await loadCurrentSession();
-    }catch(e){rows=[];session=null;selectedIndex=null;render();status.textContent='Помилка: '+(e?.message||e)}finally{loading=false;el('sleepTimelineRefresh').classList.remove('busy')}
+      if(force||!sessions.length){const oldStart=session?.startTs;const d=await api({api:'sleepSessions',limit:30},18000);sessions=(Array.isArray(d)?d:[]).filter(x=>Number(x.startTs)>0&&Number(x.endTs)>Number(x.startTs));if(oldStart){const i=sessions.findIndex(x=>String(x.startTs)===String(oldStart));sessionIndex=i>=0?i:Math.min(sessionIndex,Math.max(0,sessions.length-1))}else sessionIndex=Math.min(sessionIndex,Math.max(0,sessions.length-1))}
+      if(!sessions.length)throw Error('завершених sleepSession немає');await loadCurrentSession(force);
+    }catch(e){if(!rows.length){session=null;selectedIndex=null;render()}status.textContent='Помилка: '+(e?.message||e)}finally{loading=false;el('sleepTimelineRefresh').classList.remove('busy')}
   }
-  async function loadCurrentSession(){
-    session=sessions[sessionIndex];if(!session)throw Error('сесію не знайдено');const start=Number(session.startTs),end=Number(session.endTs);stages=parseStages(session.stagesJSON);rows=[];selectedIndex=null;
-    el('sleepSessionDate').textContent=fmtDate(start*1000);el('sleepTimelineRange').textContent=`${fmtTime(start*1000)}–${fmtTime(end*1000)} · ${fmtDur((end-start)*1000)}`;el('sleepPointDuration').textContent=fmtDur((end-start)*1000);updateNav();render();
-    const raw=await stateChunks(start,end);rows=raw.map(r=>({ts:epochMs(r.bucket_ts),avgHr:num(r.avg_hr),motion:num(r.motion_score),rrCount:Number(r.rr_count||0),rmssd:num(r.rmssd_ms)})).filter(r=>r.ts>=start*1000&&r.ts<=end*1000).sort((a,b)=>a.ts-b.ts);rows.forEach(r=>r.hrvValid=validHrv(r));
-    if(!rows.length){updateSelected();render();el('sleepTimelineStatus').textContent=`Фази є (${stages.length}), але 5-хвилинні HR/HRV/рух не отримані`;return}
-    selectedIndex=rows.length-1;updateSelected();render();el('sleepTimelineStatus').textContent=`Готово · ${rows.length} п’ятихвилинних вікон · ${stages.length} сегментів фаз`;
+  async function loadCurrentSession(force=false){
+    session=sessions[sessionIndex];if(!session)throw Error('сесію не знайдено');const start=Number(session.startTs),end=Number(session.endTs),key=String(start);stages=parseStages(session.stagesJSON);selectedIndex=null;
+    el('sleepSessionDate').textContent=fmtDate(start*1000);el('sleepTimelineRange').textContent=`${fmtTime(start*1000)}–${fmtTime(end*1000)} · ${fmtDur((end-start)*1000)}`;el('sleepPointDuration').textContent=fmtDur((end-start)*1000);updateNav();renderPhaseQuality();
+    const cached=rowCache.get(key);if(cached?.length){rows=cached;selectedIndex=rows.length-1;updateSelected();render();el('sleepTimelineStatus').textContent=`Показую кеш · ${rows.length} вікон; перевіряю оновлення…`}else{rows=[];updateSelected();render()}
+    try{
+      const raw=await stateRange(start,end);const fresh=raw.map(r=>({ts:epochMs(r.bucket_ts),avgHr:num(r.avg_hr),motion:num(r.motion_score),rrCount:Number(r.rr_count||0),rmssd:num(r.rmssd_ms)})).filter(r=>r.ts>=start*1000&&r.ts<=end*1000).sort((a,b)=>a.ts-b.ts);fresh.forEach(r=>r.hrvValid=validHrv(r));
+      if(fresh.length){rows=fresh;rowCache.set(key,fresh);selectedIndex=rows.length-1;updateSelected();render();el('sleepTimelineStatus').textContent=`Готово · ${rows.length} п’ятихвилинних вікон · ${stages.length} сегментів фаз`;return}
+      if(!cached?.length)throw Error('сервер повернув 0 п’ятихвилинних вікон');
+    }catch(e){
+      if(cached?.length){rows=cached;selectedIndex=rows.length-1;updateSelected();render();el('sleepTimelineStatus').textContent=`Оновлення не вдалося (${e?.message||e}); залишив попередні ${rows.length} вікон`}
+      else{rows=[];updateSelected();render();el('sleepTimelineStatus').textContent=`Фази є (${stages.length}), але HR/HRV/рух не отримані: ${e?.message||e}`}
+    }
   }
-  function moveSession(delta){if(loading||!sessions.length)return;const next=sessionIndex+delta;if(next<0||next>=sessions.length)return;sessionIndex=next;loadCurrentSession().catch(e=>el('sleepTimelineStatus').textContent='Помилка: '+(e?.message||e));updateNav()}
+  function moveSession(delta){if(loading||!sessions.length)return;const next=sessionIndex+delta;if(next<0||next>=sessions.length)return;sessionIndex=next;loadCurrentSession(false).catch(e=>el('sleepTimelineStatus').textContent='Помилка: '+(e?.message||e));updateNav()}
   function updateNav(){const p=el('sleepPrev'),n=el('sleepNext');if(p)p.disabled=!sessions.length||sessionIndex>=sessions.length-1;if(n)n.disabled=!sessions.length||sessionIndex<=0}
   async function toggleFullscreen(){try{if(document.fullscreenElement){await document.exitFullscreen();try{await screen.orientation?.unlock?.()}catch{};return}await section.requestFullscreen?.();try{await screen.orientation?.lock?.('landscape')}catch{};setTimeout(render,180)}catch{section.classList.toggle('hl-sleep-faux-fullscreen');setTimeout(render,120)}}
 
