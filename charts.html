@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1023">
+  <title>HealthLab · Графіки</title>
+  <link rel="stylesheet" href="./style.css?v=20260907-2">
+  <link rel="stylesheet" href="./trend.css?v=20260908-1">
+  <link rel="stylesheet" href="./mode.css?v=20260910-charts1">
+</head>
+<body>
+<main class="app-shell">
+  <header class="topbar">
+    <div><div class="eyebrow">HEALTHLAB · ВІДНОВЛЕНІ ГРАФІКИ</div><h1>Графіки</h1></div>
+    <button id="refreshBtn" class="icon-btn" aria-label="Оновити">↻</button>
+  </header>
+
+  <section class="strap-card">
+    <div><div class="eyebrow">WHOOP / HEALTHLAB</div><b id="deviceName">WHOOP</b></div>
+    <span id="syncBadge" class="badge">очікування</span>
+  </section>
+
+  <section>
+    <div class="eyebrow section-overline">СЬОГОДНІ</div><h2 class="section-title">Пульс</h2>
+    <article class="pulse-card">
+      <div class="pulse-head">
+        <div><div class="metric-label">УДАРІВ ЗА ХВИЛИНУ</div><div id="periodCaption" class="muted">5-хвилинне середнє · від початку доби</div></div>
+        <div><span id="pulseNow" class="pulse-now">—</span><span class="pulse-unit"> уд/хв</span></div>
+      </div>
+      <div id="periods" class="periods">
+        <button class="active" data-period="today">Сьогодні</button><button data-period="24">24 год</button><button data-period="12">12 год</button><button data-period="6">6 год</button><button data-period="3">3 год</button>
+      </div>
+      <div class="chart-wrap"><canvas id="pulseChart"></canvas><div id="chartEmpty" class="chart-empty hidden">Немає даних пульсу за цей період</div></div>
+      <div class="chart-times"><span id="timeLeft">—</span><span id="timeMid">—</span><span id="timeRight">Зараз</span></div>
+      <div class="stats"><div><span>МІН</span><b id="minHr">—</b><small> уд/хв</small></div><div><span>СЕР</span><b id="avgHr">—</b><small> уд/хв</small></div><div><span>МАКС</span><b id="maxHr">—</b><small> уд/хв</small></div></div>
+    </article>
+  </section>
+
+  <section id="stateLab" class="state-lab">
+    <div class="cards-head">
+      <div><div class="eyebrow">МОДЕЛЬ СТАНУ v0</div><h2 class="state-title">Що зараз відбувається</h2></div>
+      <div style="display:flex;gap:8px;align-items:center"><a href="./timeline.html" class="customise" style="text-decoration:none">≋ Хронологія</a><span id="stateQuality" class="badge">—</span></div>
+    </div>
+    <article class="state-current">
+      <div class="state-current-head"><span id="stateDot" class="state-dot unknown"></span><b id="stateNow">НЕВІДОМО</b><span id="stateConfidence" class="state-confidence">—</span></div>
+      <div id="stateContext" class="state-context">Контекст: —</div>
+      <div id="stateReason" class="state-reason">Завантаження моделі стану…</div>
+    </article>
+    <article class="state-panel">
+      <div class="panel-label">ХРОНОЛОГІЯ СТАНУ · натисни на сегмент</div>
+      <div id="stateStrip" class="state-strip"></div>
+      <div class="state-legend"><span><i class="sleep"></i>Сон</span><span><i class="rest"></i>Відпочинок</span><span><i class="move"></i>Фізичне навантаження</span><span><i class="recovery"></i>Відновлення</span><span><i class="load"></i>Автономне навантаження</span><span><i class="unknown"></i>Невідомо</span></div>
+    </article>
+    <div class="signal-grid">
+      <article class="signal-card"><span>Пульс</span><b id="stateHr">—</b><small>уд/хв</small></article>
+      <article class="signal-card"><span>Відхилення пульсу</span><b id="stateResidual">—</b><small>від спокійного рівня</small></article>
+      <article class="signal-card"><span>RMSSD</span><b id="stateRmssd">—</b><small id="stateRrQuality">якість RR —</small></article>
+      <article class="signal-card"><span>Рух</span><b id="stateMotion">—</b><small id="motionThreshold">поріг —</small></article>
+    </div>
+    <article class="state-panel compact-panel">
+      <div class="panel-label">РУХ · відносний показник</div><div class="mini-chart"><canvas id="motionChart"></canvas></div>
+      <div class="panel-label second">HRV / RMSSD · лише валідні RR-вікна</div><div class="mini-chart"><canvas id="hrvChart"></canvas></div>
+    </article>
+    <article class="state-panel compact-panel">
+      <div class="panel-label">КОНТЕКСТ / МАРКЕРИ</div>
+      <div id="stateEvents" class="state-events"><span class="muted">Поки немає маркерів у вибраному вікні.</span></div>
+      <div class="teacher-row"><b>Garmin як контрольне джерело</b><span>Stress / Body Battery будуть окремими шарами після прямого підключення Garmin.</span></div>
+    </article>
+  </section>
+
+  <section id="trendLab" class="trend-lab">
+    <div class="cards-head trend-head"><div><div class="eyebrow">НАПРЯМОК</div><h2 class="trend-title">Тренд 7 днів</h2></div><span id="trendCoverage" class="badge">завантаження…</span></div>
+    <article class="trend-card"><div id="trendSummary" class="trend-summary">Формую напрямок за доступними даними…</div><div id="trendPeriod" class="trend-period muted">—</div><div id="trendRows" class="trend-rows"></div><div id="trendNote" class="trend-note">↑/↓ показує факт зміни; оцінка «сприятливіше / менш сприятливо» розраховується окремо.</div></article>
+  </section>
+
+  <section class="cards-head"><div class="eyebrow">ПОКАЗНИКИ</div><button id="dbNav" class="customise">☷ БАЗА</button></section>
+  <section class="metric-grid"><article class="metric-card"><div class="metric-label">НІЧНИЙ HRV</div><div><b id="hrvToday">—</b><span> мс</span></div><small id="hrvDay" class="muted">WHOOP · минула ніч</small></article><article class="metric-card"><div class="metric-label">НІЧНЕ ДИХАННЯ</div><div><b id="respToday">—</b><span> /хв</span></div><small id="respDay" class="muted">WHOOP · минула ніч</small></article></section>
+  <section class="mini-card"><div><div class="metric-label">RR-ІНТЕРВАЛИ</div><b id="rrCount">—</b><span class="muted"> записів</span></div><span>›</span></section>
+  <section id="database" class="database hidden"><div class="section-head"><div><div class="eyebrow">ДЗЕРКАЛО HEALTHLAB</div><h2>База</h2></div><div id="totalRows">—</div></div><div id="tableGrid" class="table-grid"></div></section>
+  <div id="status" class="status">Підключення…</div>
+</main>
+
+<button id="quickJournal" class="quick-journal" aria-label="Записати подію">🎙️</button>
+<nav class="bottom-nav hl-main-nav">
+  <a class="nav-item" href="./index.html"><span>🌙</span><b>Сон</b></a>
+  <a class="nav-item" href="./state.html"><span>🫀</span><b>Стан</b></a>
+  <a class="nav-item" href="./index.html#sleepTrend"><span>↗</span><b>Тренди</b></a>
+  <a class="nav-item active" href="./charts.html"><span>⌁</span><b>Графіки</b></a>
+  <a class="nav-item" id="journalNav" href="#events"><span>＋</span><b>Події</b></a>
+  <a class="nav-item" href="./lab.html"><span>🔬</span><b>Лаб</b></a>
+</nav>
+
+<section id="journalView" class="viewer hidden">
+  <div class="viewer-head"><h2>Події</h2><button id="closeJournal">Закрити</button></div>
+  <div class="journal-box">
+    <div class="protocol-title">Калібрувальний тест</div>
+    <div class="protocol-markers"><button data-marker="REST START" data-marker-type="rest_start">ПОЧАТОК СПОКОЮ</button><button data-marker="WALK START" data-marker-type="walk_start">ПОЧАТОК ХОДЬБИ</button><button data-marker="STOP" data-marker-type="stop">СТОП</button><button data-marker="REST END" data-marker-type="rest_end">КІНЕЦЬ СПОКОЮ</button><button data-marker="MEAL START" data-marker-type="meal_start">ПОЧАТОК ЇЖІ</button><button data-marker="MEAL END" data-marker-type="meal_end">КІНЕЦЬ ЇЖІ</button></div>
+    <div class="quick-types"><button data-type="food">🍽️ Їжа</button><button data-type="stress">⚡ Стрес</button><button data-type="fatigue">😵 Втома</button><button data-type="physical_load">🚶 Рух</button><button data-type="normal">✅ Норма</button><button data-type="medication">💊 Ліки</button><button data-type="supplement">🧴 Вітаміни</button><button data-type="symptom">🩺 Симптом</button><button data-type="device">⌚ Гаджет</button><button data-type="sleep">🌙 Сон</button></div>
+    <textarea id="eventText" placeholder="Що сталося?"></textarea>
+    <div class="journal-actions"><button id="voiceBtn">🎙️ Надиктувати</button><label class="photo-btn">📷 Фото<input id="eventPhoto" type="file" accept="image/*" capture="environment"></label><button id="saveEvent">Записати</button></div><div id="journalMsg" class="muted"></div>
+  </div>
+  <h3 class="timeline-title">Останні події</h3><div id="timelineRows" class="rows"></div>
+</section>
+<section id="viewer" class="viewer hidden"><div class="viewer-head"><h2 id="viewerTitle">—</h2><button id="closeViewer">Закрити</button></div><div id="viewerMeta" class="muted"></div><div id="rows" class="rows"></div></section>
+
+<script src="./app.js?v=20260907-2"></script>
+<script>
+STATE_META.RECOVERY.label='ВІДНОВЛЕННЯ';
+STATE_META.AUTONOMIC_LOAD.label='АВТОНОМНЕ НАВАНТАЖЕННЯ';
+STATE_META.UNKNOWN.label='НЕВІДОМО';
+findContext=function(ts){let latest=null;for(const e of stateEvents){if(e.ts>ts)break;if(['food','meal_start','meal_end'].includes(e.event_type)&&ts-e.ts<=3*3600000)latest=e}if(!latest)return null;const age=Math.round((ts-latest.ts)/60000);const base=latest.event_type==='meal_end'?'ПІСЛЯ ЇЖІ · від завершення':latest.event_type==='meal_start'?'ПІСЛЯ ЇЖІ · від початку':'ПІСЛЯ ЇЖІ';return{kind:'POST_MEAL',label:`${base} +${age} хв`}}
+</script>
+<script src="./trend.js?v=20260908-3"></script>
+</body>
+</html>
