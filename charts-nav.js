@@ -38,11 +38,24 @@
       nav.style.setProperty('margin-right','0','important');
       nav.style.setProperty('padding-left','4px','important');
       nav.style.setProperty('padding-right','4px','important');
-      if(!document.querySelector('script[data-hl-sleep-uk]')){
+      if(!document.querySelector('script[data-hl-sleep-parity]')){
         const s=document.createElement('script');
-        s.src='./sleep-uk.js?v=20260911-1';
-        s.dataset.hlSleepUk='1';
+        s.src='./sleep-mirror-parity.js?v=20260911-1';
+        s.dataset.hlSleepParity='1';
+        s.onload=()=>{
+          if(!document.querySelector('script[data-hl-sleep-uk]')){
+            const u=document.createElement('script');
+            u.src='./sleep-uk.js?v=20260911-1';
+            u.dataset.hlSleepUk='1';
+            document.body.appendChild(u);
+          }
+        };
         document.body.appendChild(s);
+      } else if(!document.querySelector('script[data-hl-sleep-uk]')){
+        const u=document.createElement('script');
+        u.src='./sleep-uk.js?v=20260911-1';
+        u.dataset.hlSleepUk='1';
+        document.body.appendChild(u);
       }
     }
   }
