@@ -1,17 +1,32 @@
-// Additive HealthLab navigation extension. The user selected Timeline as the preferred main Graphs page.
-// Legacy charts.html is preserved and not deleted.
+// Additive HealthLab navigation extension.
+// Timeline remains the preferred main Graphs page; legacy charts.html is preserved.
+// Android Sleep mirror is a separate additive tab and does not replace the existing Sleep dashboard.
 (() => {
   function install(){
     const nav=document.querySelector('.hl-main-nav');
-    if(!nav||nav.querySelector('[data-hl-charts-tab]'))return;
+    if(!nav)return;
     const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
-    const a=document.createElement('a');
-    a.className='nav-item'+(page==='timeline.html'?' active':'');
-    a.href='./timeline.html';a.dataset.hlChartsTab='1';
-    a.innerHTML='<span>⌁</span><b>Графіки</b>';
     const lab=[...nav.querySelectorAll('.nav-item')].find(x=>/Лаб|LAB/i.test(x.textContent||''));
-    if(lab)nav.insertBefore(a,lab);else nav.appendChild(a);
-    nav.style.gridTemplateColumns=`repeat(${nav.querySelectorAll('.nav-item').length},minmax(0,1fr))`;
+
+    if(!nav.querySelector('[data-hl-charts-tab]')){
+      const a=document.createElement('a');
+      a.className='nav-item'+(page==='timeline.html'?' active':'');
+      a.href='./timeline.html';a.dataset.hlChartsTab='1';
+      a.innerHTML='<span>⌁</span><b>Графіки</b>';
+      if(lab)nav.insertBefore(a,lab);else nav.appendChild(a);
+    }
+
+    if(!nav.querySelector('[data-hl-sleep-tab]')){
+      const a=document.createElement('a');
+      a.className='nav-item'+(page==='sleep.html'?' active':'');
+      a.href='./sleep.html';a.dataset.hlSleepTab='1';
+      a.innerHTML='<span>◒</span><b>sleep</b>';
+      const labNow=[...nav.querySelectorAll('.nav-item')].find(x=>/Лаб|LAB/i.test(x.textContent||''));
+      if(labNow)nav.insertBefore(a,labNow);else nav.appendChild(a);
+    }
+
+    const count=nav.querySelectorAll('.nav-item').length;
+    nav.style.gridTemplateColumns=`repeat(${count},minmax(0,1fr))`;
   }
   document.addEventListener('DOMContentLoaded',()=>setTimeout(install,0));
   window.addEventListener('load',install);
