@@ -26,7 +26,7 @@
     }
 
     const count=nav.querySelectorAll('.nav-item').length;
-    nav.style.gridTemplateColumns=`repeat(${count},minmax(0,1fr))`;
+    nav.style.setProperty('grid-template-columns',`repeat(${count},minmax(0,1fr))`,'important');
   }
   document.addEventListener('DOMContentLoaded',()=>setTimeout(install,0));
   window.addEventListener('load',install);
