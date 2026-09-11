@@ -38,10 +38,10 @@
       nav.style.setProperty('margin-right','0','important');
       nav.style.setProperty('padding-left','4px','important');
       nav.style.setProperty('padding-right','4px','important');
-      if(!document.querySelector('script[data-hl-sleep-physical-fix]')){
+      if(!document.querySelector('script[data-hl-sleep-uk]')){
         const s=document.createElement('script');
-        s.src='./sleep-mirror-physical-fix.js?v=20260911-1628';
-        s.dataset.hlSleepPhysicalFix='1';
+        s.src='./sleep-uk.js?v=20260911-1';
+        s.dataset.hlSleepUk='1';
         document.body.appendChild(s);
       }
     }
