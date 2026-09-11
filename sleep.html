@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#11132f">
+  <title>HealthLab · sleep</title>
+  <link rel="stylesheet" href="./style.css?v=20260907-2">
+  <link rel="stylesheet" href="./mode.css?v=20260908-5">
+  <link rel="stylesheet" href="./sleep-mirror.css?v=20260911-1">
+</head>
+<body class="hl-sleep-mirror-page">
+<main class="sleep-shell">
+  <header class="sleep-topbar">
+    <div><div class="sleep-kicker">HEALTHLAB · ANDROID MIRROR</div><h1>Sleep</h1></div>
+    <button id="sleepRefresh" class="sleep-icon-btn" aria-label="Refresh">↻</button>
+  </header>
+
+  <section id="journalPrompt" class="sleep-sheet-card sleep-journal-prompt hidden" aria-live="polite">
+    <h2>Good morning!</h2>
+    <p>Your night data is in. Logging how you felt helps HealthLab learn what drives your best recovery.</p>
+    <button id="openJournal" class="sleep-primary">Open Journal</button>
+    <button id="laterJournal" class="sleep-ghost">Maybe later</button>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-section-head"><div><span>LAST NIGHT</span><h2>Sleep performance</h2></div><b>Rest</b></div>
+    <article class="sleep-hero-card">
+      <div class="sleep-vessel" id="restVessel"><div class="sleep-vessel-fill" id="restFill"></div><div class="sleep-vessel-number"><strong id="restScore">—</strong><span id="restUnit">%</span></div></div>
+      <div class="sleep-hero-copy"><b id="restWord">Loading</b><span id="restSource">On-device</span><small id="restAsleep">— asleep</small></div>
+    </article>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-section-head"><div><span>TAP TO LOG</span><h2>Sleep marks</h2></div><b>Phase 1</b></div>
+    <article class="sleep-card sleep-marks-card">
+      <p>Tap when you're heading to bed or when you wake. Each tap is logged with the time. It doesn't change tonight's detected sleep.</p>
+      <div class="sleep-two-actions"><button id="markBed"><span>☾</span>Going to sleep</button><button id="markWake"><span>☀</span>I'm awake</button></div>
+    </article>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-night-nav">
+      <button id="prevNight" class="sleep-chevron" aria-label="Previous night">‹</button>
+      <button id="pickNight" class="sleep-date-btn"><b id="nightLabel">Last night</b><span id="nightDate">—</span></button>
+      <button id="nextNight" class="sleep-chevron" aria-label="Next night">›</button>
+    </div>
+    <div class="sleep-time-actions"><span id="nightClock">—</span><button id="editSleep" title="Adjust sleep times">✎</button><button id="deleteSleep" title="Delete this sleep session">⌫</button><button id="addNap" title="Add a nap">＋</button></div>
+    <div id="olderHint" class="sleep-hint hidden">No earlier night stored yet. Earlier nights sync in the morning.</div>
+
+    <article class="sleep-card sleep-window-card">
+      <div><span>☾</span><small>FELL ASLEEP</small><b id="fellAsleep">—</b></div>
+      <div class="sleep-window-divider"></div>
+      <div><span>☀</span><small>WOKE</small><b id="wokeAt">—</b></div>
+    </article>
+
+    <article class="sleep-card sleep-stage-card">
+      <div class="sleep-card-head"><div><h3>Stage breakdown</h3><small id="stageSubtitle">—</small></div><strong id="stageAsleep">—</strong></div>
+      <div id="hypnogram" class="sleep-hypnogram"></div>
+      <div class="sleep-stage-axis"><span id="axisStart">—</span><span id="axisMid">—</span><span id="axisEnd">—</span></div>
+      <canvas id="motionStrip" class="sleep-motion-strip" height="58"></canvas>
+      <div class="sleep-stage-legend"><span><i class="deep"></i>Deep</span><span><i class="light"></i>Light</span><span><i class="rem"></i>REM</span><span><i class="wake"></i>Awake</span></div>
+      <div id="stageRows" class="sleep-stage-rows"></div>
+    </article>
+
+    <article class="sleep-card sleep-naps-card">
+      <span class="sleep-overline">DAYTIME SLEEP</span><h3>Naps</h3>
+      <div id="napSummary" class="sleep-nap-summary hidden"></div>
+      <div id="napRows"><p class="sleep-muted">No naps recorded for this day.</p></div>
+      <div class="sleep-hairline"></div>
+      <div class="sleep-main-footer"><span id="sleepSourceBadge" class="sleep-source-badge">Whoop</span><button id="whySleep">ⓘ Why this sleep?</button></div>
+      <div id="whySleepText" class="sleep-disclosure hidden"><b>About your main sleep</b><p id="whySleepReason">This is your only sleep block today.</p></div>
+    </article>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-section-head"><div><span>METRICS</span><h2>Night detail</h2></div><b>vs typical</b></div>
+    <div id="metricGrid" class="sleep-metric-grid"></div>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-section-head"><div><span>LAST 14 NIGHTS</span><h2>Sleep-debt ledger</h2></div><b>running balance</b></div>
+    <article class="sleep-card" id="debtLedger"></article>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-section-head"><div><span>SELECTED NIGHT</span><h2>Stages vs typical</h2></div><b>marker = your mean</b></div>
+    <article class="sleep-card" id="stagesTypical"></article>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-section-head"><div><span>SLEEP</span><h2>Trend</h2></div><b>Last 14 days</b></div>
+    <article class="sleep-card sleep-trend-card"><div class="sleep-card-head"><div><h3>Hours asleep</h3><small>Per night, trailing 14 days</small></div><strong id="hoursAvg">—</strong></div><canvas id="hoursTrend" height="190"></canvas><div id="hoursFooter" class="sleep-stat-footer"></div></article>
+    <article class="sleep-card sleep-trend-card"><div class="sleep-card-head"><div><h3>Sleep Debt</h3><small>Hours of sleep debt per day</small></div><strong id="debtNow">—</strong></div><canvas id="debtTrend" height="190"></canvas><div id="debtFooter" class="sleep-stat-footer"></div></article>
+  </section>
+
+  <section class="sleep-section">
+    <div class="sleep-section-head"><div><span>SLEEP NEED</span><h2>Hours vs Needed</h2></div><b id="hoursNeededPct">—</b></div>
+    <article class="sleep-card" id="hoursNeededCard"></article>
+  </section>
+
+  <section class="sleep-section" id="consistencySection">
+    <div class="sleep-section-head"><div><span>LAST 14 NIGHTS</span><h2>Sleep Consistency</h2></div><b id="consistencyScore">—</b></div>
+    <article class="sleep-card"><canvas id="consistencyChart" height="220"></canvas><div id="consistencyFooter" class="sleep-stat-footer"></div></article>
+  </section>
+
+  <div id="sleepStatus" class="sleep-status">Loading Sleep…</div>
+</main>
+
+<nav class="bottom-nav hl-main-nav sleep-web-nav">
+  <a class="nav-item" href="./index.html"><span>🌙</span><b>Сон</b></a>
+  <a class="nav-item" href="./state.html"><span>🫀</span><b>Стан</b></a>
+  <a class="nav-item" href="./index.html#sleepTrend"><span>↗</span><b>Тренди</b></a>
+  <a class="nav-item" href="./index.html#events"><span>＋</span><b>Події</b></a>
+  <a class="nav-item active" data-hl-sleep-tab="1" href="./sleep.html"><span>◒</span><b>sleep</b></a>
+  <a class="nav-item" href="./lab.html"><span>🔬</span><b>Лаб</b></a>
+</nav>
+
+<div id="sleepModal" class="sleep-modal hidden" role="dialog" aria-modal="true" aria-labelledby="sleepModalTitle">
+  <div class="sleep-modal-backdrop" data-close-modal="1"></div>
+  <section class="sleep-modal-sheet"><div class="sleep-modal-head"><h2 id="sleepModalTitle">—</h2><button id="sleepModalClose" aria-label="Close">×</button></div><div id="sleepModalBody"></div></section>
+</div>
+
+<script src="./sleep-mirror.js?v=20260911-1"></script>
+<script src="./charts-nav.js?v=20260911-2"></script>
+</body>
+</html>
