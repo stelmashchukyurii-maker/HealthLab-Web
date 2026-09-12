@@ -151,45 +151,16 @@
     };
     requestAnimationFrame(()=>requestAnimationFrame(repaint));
     setTimeout(repaint,120);
-    setTimeout(repaint,420);
-  }
-
-  let lastResumeRefresh=0;
-  function triggerRealRefresh(reason='resume'){
-    const page=pageName();
-    if(!['index.html','timeline.html'].includes(page))return;
-    const now=Date.now();
-    if(now-lastResumeRefresh<900)return;
-    lastResumeRefresh=now;
-    const clickRefresh=()=>{
-      const b=document.getElementById('refreshBtn');
-      if(!b)return false;
-      try{b.click();return true}catch(e){console.warn('HealthLab '+reason+' refresh click',e);return false}
-    };
-    setTimeout(clickRefresh,180);
-    // Sleep timeline can still be initializing when the first click arrives.
-    // Retry only when it is visibly still waiting/erroring, not while a real load is active.
-    if(page==='index.html'){
-      setTimeout(()=>{
-        const s=document.getElementById('sleepTimelineStatus');
-        const text=(s?.textContent||'').toLowerCase();
-        if(text.includes('очікую')||text.includes('помилка')||text.includes('немає даних'))clickRefresh();
-      },4200);
-    }
   }
 
   function installResumeFix(){
     if(window.__hlResumeFix)return;
     window.__hlResumeFix=true;
-    window.addEventListener('pageshow',()=>{
-      repaintCharts();
-      triggerRealRefresh('pageshow');
-    });
+    // Do not launch data loads here. Each page already starts its own canonical load.
+    // Extra automatic refreshes caused overlapping requests and could erase good data.
+    window.addEventListener('pageshow',()=>repaintCharts());
     document.addEventListener('visibilitychange',()=>{
-      if(document.visibilityState==='visible'){
-        repaintCharts();
-        triggerRealRefresh('visible');
-      }
+      if(document.visibilityState==='visible')repaintCharts();
     });
     window.addEventListener('focus',()=>repaintCharts());
   }
