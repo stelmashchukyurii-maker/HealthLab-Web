@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="color-scheme" content="dark">
+  <title>Florivo Chat</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./style.css?v=0.1.0">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="brand">FLORIVO CHAT</div>
+        <div class="project-row">
+          <span class="project-dot"></span>
+          <span>HealthLab</span>
+          <span class="version">v0.1</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="installBtn" class="ghost" type="button" hidden>Встановити</button>
+        <button id="signOutBtn" class="ghost" type="button" hidden>Вийти</button>
+      </div>
+    </header>
+
+    <div id="netBanner" class="banner" hidden>Немає мережі. Нові повідомлення поки не відправляються.</div>
+    <div id="serviceBanner" class="banner warning" hidden></div>
+
+    <main>
+      <section id="authView" class="auth-card">
+        <div class="auth-logo">F</div>
+        <h1>Florivo Chat</h1>
+        <p>Увійди тим самим акаунтом, який уже використовується в HealthLab.</p>
+        <label for="emailInput">Email</label>
+        <input id="emailInput" type="email" autocomplete="email" placeholder="name@example.com">
+        <button id="loginBtn" class="primary wide" type="button">Надіслати посилання для входу</button>
+        <p id="loginStatus" class="status-text"></p>
+      </section>
+
+      <section id="chatView" class="chat-view" hidden>
+        <div id="emptyState" class="empty-state">
+          <div class="empty-icon">✦</div>
+          <strong>Florivo готовий</strong>
+          <span>Напиши перше повідомлення. Історія залишиться тут.</span>
+        </div>
+        <div id="messages" class="messages" role="log" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <form id="composer" class="composer" hidden>
+      <textarea id="messageInput" rows="1" maxlength="6000" placeholder="Написати повідомлення…"></textarea>
+      <button id="sendBtn" class="send" type="submit" aria-label="Надіслати">➤</button>
+    </form>
+  </div>
+
+  <template id="bubbleTemplate">
+    <article class="turn">
+      <div class="bubble user-bubble">
+        <div class="text user-text"></div>
+        <div class="meta user-meta"></div>
+      </div>
+      <div class="bubble assistant-bubble">
+        <div class="assistant-head"><span class="spark">✦</span> Florivo</div>
+        <div class="text assistant-text"></div>
+        <div class="action-badge" hidden>✓ HealthLab</div>
+        <div class="meta assistant-meta"></div>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="./app.js?v=0.1.0"></script>
+</body>
+</html>
