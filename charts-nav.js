@@ -9,6 +9,10 @@
     if(['timeline.html','activity.html','state.html','charts.html'].includes(page))return 'day';
     return 'sleep';
   }
+  function ensureOldCss(){
+    if(document.querySelector('link[data-hl-old-css]'))return;
+    const l=document.createElement('link');l.rel='stylesheet';l.href='./old-menu.css?v=20260912-1';l.dataset.hlOldCss='1';document.head.appendChild(l);
+  }
 
   function oldMenuMarkup(){
     return `<div id="hlOldMenu" class="hl-old-menu" aria-hidden="true">
@@ -119,6 +123,7 @@
 
   function install(){
     const page=pageName();
+    ensureOldCss();
     installPrimaryNav(page);
     installSleepParity(page);
     installSecureEvents(page);
