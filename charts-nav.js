@@ -58,6 +58,28 @@
     }
   }
 
+  function freshNavigate(href){
+    const u=new URL(href,location.href);
+    u.searchParams.set('hl_nav',Date.now().toString(36));
+    location.assign(u.href);
+  }
+
+  function bindFreshPrimaryNavigation(nav){
+    nav.querySelectorAll('a.nav-item').forEach(a=>{
+      const href=a.getAttribute('href')||'';
+      const target=new URL(href,location.href);
+      const targetPage=(target.pathname.split('/').pop()||'index.html').toLowerCase();
+      if(!['index.html','timeline.html'].includes(targetPage))return;
+      if(a.dataset.hlFreshNavBound)return;
+      a.dataset.hlFreshNavBound='1';
+      a.addEventListener('click',e=>{
+        if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+        e.preventDefault();
+        freshNavigate(href);
+      });
+    });
+  }
+
   function installPrimaryNav(page){
     const navs=[...document.querySelectorAll('nav.bottom-nav')];
     if(!navs.length)return;
@@ -74,6 +96,7 @@
     nav.innerHTML=items.map(([k,href,icon,label])=>`<a class="nav-item ${active===k?'active':''}" href="${href}"><span>${icon}</span><b>${label}</b></a>`).join('')+
       `<button class="nav-item hl-old-trigger" type="button" data-hl-old-trigger aria-controls="hlOldMenu"><span>🗃️</span><b>OLD</b></button>`;
     nav.style.setProperty('grid-template-columns','repeat(4,minmax(0,1fr))','important');
+    bindFreshPrimaryNavigation(nav);
     if(page==='timeline.html'){
       const h=document.querySelector('.topbar h1');if(h)h.textContent='День';
       const e=document.querySelector('.topbar .eyebrow');if(e)e.textContent='HEALTHLAB · 24/7';
@@ -114,9 +137,6 @@
     }
   }
 
-  // Android/PWA browsers may restore Sleep/Day from the back-forward cache.
-  // Canvas bitmaps can then be blank even though data and DOM are still alive.
-  // Repaint on resume; only re-fetch when the page was actually restored.
   function repaintCharts(refreshData=false){
     const page=pageName();
     const repaint=()=>{
@@ -140,9 +160,20 @@
   function installResumeFix(){
     if(window.__hlResumeFix)return;
     window.__hlResumeFix=true;
-    window.addEventListener('pageshow',e=>repaintCharts(!!e.persisted));
+    window.addEventListener('pageshow',e=>{
+      if(e.persisted){
+        const k='hl_bfcache_reload_'+pageName();
+        if(sessionStorage.getItem(k)!=='1'){
+          sessionStorage.setItem(k,'1');
+          location.reload();
+          return;
+        }
+      }
+      sessionStorage.removeItem('hl_bfcache_reload_'+pageName());
+      repaintCharts(true);
+    });
     document.addEventListener('visibilitychange',()=>{
-      if(document.visibilityState==='visible')repaintCharts(false);
+      if(document.visibilityState==='visible')repaintCharts(true);
     });
     window.addEventListener('focus',()=>repaintCharts(false));
   }
