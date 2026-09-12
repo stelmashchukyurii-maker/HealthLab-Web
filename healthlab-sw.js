@@ -1,11 +1,12 @@
-const CACHE = "healthlab-pwa-v0.1.1";
+const CACHE = "healthlab-pwa-v0.1.2";
 const STATIC = [
-  "./timeline.html",
   "./index.html",
+  "./timeline.html",
   "./lab.html",
   "./activity.html",
   "./healthlab.webmanifest",
   "./healthlab-icon.svg",
+  "./charts-nav.js?v=20260912-2",
   "./timeline.css?v=20260907-2",
   "./timeline-compact.css?v=20260907-1",
   "./timeline-gestures.css?v=20260907-2",
@@ -41,7 +42,7 @@ self.addEventListener("fetch", (event) => {
         const copy = res.clone();
         caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
         return res;
-      }).catch(async () => (await caches.match(req)) || (await caches.match("./timeline.html")))
+      }).catch(async () => (await caches.match(req)) || (await caches.match("./index.html")))
     );
     return;
   }
