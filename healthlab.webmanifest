@@ -2,7 +2,7 @@
   "name": "HealthLab",
   "short_name": "HealthLab",
   "description": "HealthLab research dashboard and timeline",
-  "start_url": "./timeline.html?source=pwa",
+  "start_url": "./index.html?source=pwa",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b1023",
