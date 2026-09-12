@@ -9,7 +9,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./style.css?v=0.2.1">
+  <link rel="stylesheet" href="./style.css?v=0.3.0">
 </head>
 <body>
   <div class="app-shell">
@@ -19,7 +19,7 @@
         <div class="project-row">
           <span class="project-dot"></span>
           <span>HealthLab Agent</span>
-          <span class="version">v0.2.2</span>
+          <span class="version">v0.3.0</span>
         </div>
       </div>
       <div class="top-actions">
@@ -46,13 +46,16 @@
         <div id="emptyState" class="empty-state">
           <div class="empty-icon">✦</div>
           <strong>Florivo готовий</strong>
-          <span>Напиши повідомлення. HealthLab Agent може фіксувати події та читати дозволений HR-контекст.</span>
+          <span>Напиши повідомлення або прикріпи фото. HealthLab Agent може фіксувати дозволені події та читати дозволений HealthLab-контекст.</span>
         </div>
         <div id="messages" class="messages" role="log" aria-live="polite"></div>
       </section>
     </main>
 
+    <div id="attachmentPreview" class="attachment-preview" hidden></div>
     <form id="composer" class="composer" hidden>
+      <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" multiple hidden>
+      <button id="attachBtn" class="attach" type="button" aria-label="Додати фото" title="Додати фото">＋</button>
       <textarea id="messageInput" rows="1" maxlength="6000" placeholder="Написати повідомлення…"></textarea>
       <button id="sendBtn" class="send" type="submit" aria-label="Надіслати">➤</button>
     </form>
@@ -73,6 +76,6 @@
     </article>
   </template>
 
-  <script type="module" src="./app.js?v=0.2.2"></script>
+  <script type="module" src="./app.js?v=0.3.0"></script>
 </body>
 </html>
