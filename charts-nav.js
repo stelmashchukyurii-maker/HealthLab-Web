@@ -3,9 +3,9 @@
 // Android Sleep mirror is a separate additive tab and does not replace the existing Sleep dashboard.
 (() => {
   function install(){
+    const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
     const nav=document.querySelector('.hl-main-nav');
     if(nav){
-      const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
       const lab=[...nav.querySelectorAll('.nav-item')].find(x=>/Лаб|LAB/i.test(x.textContent||''));
 
       if(!nav.querySelector('[data-hl-charts-tab]')){
@@ -67,6 +67,12 @@
         const l=document.createElement('link');l.rel='stylesheet';l.href='./event-v2.css?v=20260912-1';l.dataset.hlEventV2Css='1';document.head.appendChild(l);
       }
       const s=document.createElement('script');s.src='./event-v2.js?v=20260912-1';s.dataset.hlEventV2='1';document.body.appendChild(s);
+    }
+
+    // When an authenticated Event v2 session exists, merge private context markers into
+    // the preferred main timeline without replacing the existing physiology layers.
+    if(page==='timeline.html'&&!document.querySelector('script[data-hl-event-v2-timeline]')){
+      const s=document.createElement('script');s.src='./event-v2-timeline.js?v=20260912-1';s.dataset.hlEventV2Timeline='1';document.body.appendChild(s);
     }
   }
   document.addEventListener('DOMContentLoaded',()=>setTimeout(install,0));
