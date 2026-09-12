@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1023">
+  <title>HealthLab · Кроки та рух</title>
+  <link rel="stylesheet" href="./mode.css?v=20260908-5">
+  <link rel="stylesheet" href="./activity.css?v=20260912-1">
+</head>
+<body>
+<main class="activity-shell">
+  <header class="activity-topbar">
+    <a class="back-link" href="./lab.html">‹ Лабораторія</a>
+    <div>
+      <div class="eyebrow">HEALTHLAB · ACTIVITY LAB</div>
+      <h1>Кроки та рух</h1>
+    </div>
+    <button id="refreshBtn" class="icon-btn" aria-label="Оновити">↻</button>
+  </header>
+
+  <section class="card date-card">
+    <div class="date-nav">
+      <button id="prevDay" aria-label="Попередній день">‹</button>
+      <button id="selectedDate" class="date-main">—</button>
+      <button id="nextDay" aria-label="Наступний день">›</button>
+    </div>
+    <button id="todayBtn" class="today-btn">Сьогодні</button>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card card">
+      <div class="metric-label">КРОКИ</div>
+      <div class="metric-main"><b id="stepValue">—</b><span> кроків</span></div>
+      <div id="stepSource" class="metric-note">Калібрування · Garmin буде еталоном</div>
+    </article>
+    <article class="summary-card card">
+      <div class="metric-label">РУХОВИЙ ОБСЯГ</div>
+      <div class="metric-main"><b id="motionTotal">—</b><span> ум. од.</span></div>
+      <div class="metric-note">Сума 5-хвилинних motion-score за вибраний день</div>
+    </article>
+  </section>
+
+  <section class="card chart-card">
+    <div class="chart-head">
+      <div>
+        <div class="eyebrow">КРОКИ · КАЛІБРУВАННЯ</div>
+        <h2>Кроки за днями</h2>
+      </div>
+      <span id="stepBadge" class="badge warn">очікує еталону</span>
+    </div>
+    <div class="chart-wrap step-wrap">
+      <canvas id="stepsChart"></canvas>
+      <div id="stepsEmpty" class="chart-empty hidden">Кроків у веб-джерелі поки немає. Garmin залишаємо еталоном і підключимо сюди після калібрувального проходу.</div>
+    </div>
+    <div class="legend-row"><span><i class="garmin-dot"></i>Garmin reference</span><span><i class="noop-dot"></i>NOOP estimate</span></div>
+    <p class="explain"><b>Важливо:</b> зараз HealthLab не підставляє глобальний коефіцієнт рух→кроки. Графік кроків стане активним після окремої калібровки й held-out перевірки.</p>
+  </section>
+
+  <section class="card chart-card">
+    <div class="chart-head">
+      <div>
+        <div class="eyebrow">WHOOP / HEALTHLAB MOTION</div>
+        <h2>Уся рухова активність протягом дня</h2>
+      </div>
+      <span id="motionBadge" class="badge">5 хв</span>
+    </div>
+    <div class="chart-wrap motion-wrap">
+      <canvas id="motionActivityChart"></canvas>
+      <div id="motionEmpty" class="chart-empty hidden">Немає motion-даних за цей день.</div>
+    </div>
+    <p class="explain">Це <b>не кроки</b>. Тут видно будь-який рух браслета: ходьбу, короткі переміщення, роботу руками, коробки, конвеєр, побутову активність. Саме тому цей графік може бути високим навіть у день з невеликою кількістю Garmin-кроків.</p>
+  </section>
+
+  <section class="card method-card">
+    <div class="eyebrow">РОЗДІЛЯЄМО ДВА ПОНЯТТЯ</div>
+    <div class="method-grid">
+      <div><b>Кроки</b><span>Локомоція. Калібруємо окремо; Garmin = незалежний reference.</span></div>
+      <div><b>Рух</b><span>Загальний motion volume. Корисний для оцінки фізичної роботи навіть без ходьби.</span></div>
+    </div>
+  </section>
+
+  <div id="status" class="status">Завантаження…</div>
+</main>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="./index.html"><span>▦</span><b>Сьогодні</b></a>
+  <a class="nav-item" href="./timeline.html"><span>≋</span><b>Хронологія</b></a>
+  <a class="nav-item active" href="./activity.html"><span>🚶</span><b>Активність</b></a>
+  <a class="nav-item" href="./lab.html"><span>⚗</span><b>LAB</b></a>
+</nav>
+
+<script src="./activity.js?v=20260912-1"></script>
+</body>
+</html>
