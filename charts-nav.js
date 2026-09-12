@@ -1,7 +1,8 @@
 // HealthLab primary navigation + additive secure extensions.
 // Primary information architecture (2026-09-12):
-//   Sleep -> Day (24/7) -> LAB -> OLD popup.
-// OLD is a temporary migration/archive launcher. Legacy pages remain intact until their useful parts are moved.
+//   Sleep -> Day (24/7) -> LAB -> OLD legacy tray.
+// OLD is a temporary launcher for legacy bottom-nav destinations that have not yet
+// been migrated into the three canonical surfaces. Legacy pages remain intact.
 (() => {
   function pageName(){return (location.pathname.split('/').pop()||'index.html').toLowerCase()}
   function activeSection(page){
@@ -11,32 +12,22 @@
   }
   function ensureOldCss(){
     if(document.querySelector('link[data-hl-old-css]'))return;
-    const l=document.createElement('link');l.rel='stylesheet';l.href='./old-menu.css?v=20260912-1';l.dataset.hlOldCss='1';document.head.appendChild(l);
+    const l=document.createElement('link');l.rel='stylesheet';l.href='./old-menu.css?v=20260912-2';l.dataset.hlOldCss='1';document.head.appendChild(l);
   }
 
   function oldMenuMarkup(){
     return `<div id="hlOldMenu" class="hl-old-menu" aria-hidden="true">
-      <button class="hl-old-backdrop" type="button" data-hl-old-close aria-label="Закрити OLD"></button>
-      <section class="hl-old-sheet" role="dialog" aria-modal="true" aria-label="OLD · старі розділи">
-        <div class="hl-old-head">
-          <div><span>АРХІВ / ПЕРЕНЕСЕННЯ</span><h2>OLD · старі розділи</h2></div>
-          <button class="hl-old-close" type="button" data-hl-old-close aria-label="Закрити">×</button>
-        </div>
-        <p class="hl-old-note">Тут зберігаємо старі екрани, доки не перенесли потрібне у 🌙 Сон, ☀️ День або 🔬 LAB.</p>
-        <div class="hl-old-grid">
-          <a href="./charts.html"><strong>📈 24/7 графіки</strong><small>Старий набір денних графіків</small></a>
-          <a href="./state.html"><strong>🫀 Стан</strong><small>HR · HRV · рух · пояснення</small></a>
-          <a href="./index.html#sleepTrend"><strong>↗ Тренди</strong><small>Попередні тренди</small></a>
-          <a href="./index.html#events"><strong>＋ Події</strong><small>Журнал і маркери</small></a>
-          <a href="./sleep.html"><strong>◒ Sleep / Android</strong><small>Детальний старий sleep-екран</small></a>
-          <a href="./reserve.html"><strong>🔋 Reserve / Battery</strong><small>Експериментальна метрика ресурсу</small></a>
-        </div>
-      </section>
+      <nav class="hl-old-tray" aria-label="OLD · старі розділи">
+        <a class="hl-old-item" href="./state.html" data-hl-old-link><span>🫀</span><b>Стан</b></a>
+        <a class="hl-old-item" href="./index.html#sleepTrend" data-hl-old-link><span>↗</span><b>Тренди</b></a>
+        <a class="hl-old-item" href="./index.html#events" data-hl-old-link><span>＋</span><b>Події</b></a>
+        <a class="hl-old-item" href="./charts.html" data-hl-old-link><span>〽</span><b>Графіки</b></a>
+      </nav>
     </div>`;
   }
 
   function ensureOldMenu(page){
-    // The old inline migration block in LAB is superseded by the fourth bottom-nav button.
+    // Old inline migration blocks are superseded by the compact OLD tray.
     if(page==='lab.html'){
       [...document.querySelectorAll('details')].forEach(d=>{
         if((d.textContent||'').includes('OLD · старі розділи'))d.remove();
@@ -45,19 +36,28 @@
     if(!document.getElementById('hlOldMenu'))document.body.insertAdjacentHTML('beforeend',oldMenuMarkup());
     const menu=document.getElementById('hlOldMenu');
     const trigger=document.querySelector('[data-hl-old-trigger]');
-    const open=()=>{
-      menu.classList.add('open');menu.setAttribute('aria-hidden','false');
-      document.body.classList.add('hl-old-open');trigger?.classList.add('active');
+    if(!menu||!trigger)return;
+
+    const setOpen=(open)=>{
+      menu.classList.toggle('open',open);
+      menu.setAttribute('aria-hidden',open?'false':'true');
+      trigger.classList.toggle('active',open);
+      trigger.setAttribute('aria-expanded',open?'true':'false');
     };
-    const close=()=>{
-      menu.classList.remove('open');menu.setAttribute('aria-hidden','true');
-      document.body.classList.remove('hl-old-open');trigger?.classList.remove('active');
-    };
-    trigger?.addEventListener('click',open);
-    menu.querySelectorAll('[data-hl-old-close]').forEach(x=>x.addEventListener('click',close));
+
+    if(!trigger.dataset.hlOldBound){
+      trigger.dataset.hlOldBound='1';
+      trigger.setAttribute('aria-expanded','false');
+      trigger.addEventListener('click',()=>setOpen(!menu.classList.contains('open')));
+    }
+    menu.querySelectorAll('[data-hl-old-link]').forEach(link=>{
+      if(link.dataset.hlOldBound)return;
+      link.dataset.hlOldBound='1';
+      link.addEventListener('click',()=>setOpen(false));
+    });
     if(!window.__hlOldEscape){
       window.__hlOldEscape=true;
-      document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')setOpen(false)});
     }
   }
 
@@ -75,7 +75,7 @@
       ['lab','./lab.html','🔬','LAB']
     ];
     nav.innerHTML=items.map(([k,href,icon,label])=>`<a class="nav-item ${active===k?'active':''}" href="${href}"><span>${icon}</span><b>${label}</b></a>`).join('')+
-      `<button class="nav-item hl-old-trigger" type="button" data-hl-old-trigger><span>🗃️</span><b>OLD</b></button>`;
+      `<button class="nav-item hl-old-trigger" type="button" data-hl-old-trigger aria-controls="hlOldMenu"><span>🗃️</span><b>OLD</b></button>`;
     nav.style.setProperty('grid-template-columns','repeat(4,minmax(0,1fr))','important');
 
     // Day is the canonical 24/7 view. Keep the underlying timeline implementation,
