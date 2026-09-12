@@ -30,6 +30,7 @@ const bubbleTemplate = $("bubbleTemplate");
 let activeSession = null;
 let sending = false;
 let deferredInstall = null;
+let retryRequest = null;
 
 function formatTime(iso) {
   try {
@@ -179,13 +180,14 @@ loginBtn.addEventListener("click", async () => {
   loginStatus.textContent = error ? `Помилка: ${error.message}` : "Посилання для входу надіслано на email. Відкрий його на цьому телефоні.";
 });
 emailInput.addEventListener("keydown", (e) => { if (e.key === "Enter") loginBtn.click(); });
-signOutBtn.addEventListener("click", async () => { await supabase.auth.signOut(); renderHistory([]); });
+signOutBtn.addEventListener("click", async () => { retryRequest = null; await supabase.auth.signOut(); renderHistory([]); });
 
 composer.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (sending || !navigator.onLine) return;
   const text = messageInput.value.trim();
   if (!text) return;
+  const clientRequestId = retryRequest?.text === text ? retryRequest.id : crypto.randomUUID();
   sending = true;
   setNetworkBanner();
   messageInput.value = "";
@@ -195,10 +197,12 @@ composer.addEventListener("submit", async (e) => {
   messages.append(renderTurn(optimistic));
   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   try {
-    await api("send", { method: "POST", body: { project: PROJECT, text, timezone: PROJECT_TZ } });
+    await api("send", { method: "POST", body: { project: PROJECT, text, timezone: PROJECT_TZ, client_request_id: clientRequestId } });
+    retryRequest = null;
     await loadHistory();
     await loadServiceInfo();
   } catch (err) {
+    retryRequest = { text, id: clientRequestId };
     serviceBanner.textContent = `Не відправлено: ${err.message}`;
     serviceBanner.hidden = false;
     await loadHistory().catch(() => {});
