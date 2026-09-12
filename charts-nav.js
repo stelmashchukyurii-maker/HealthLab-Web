@@ -27,7 +27,6 @@
   }
 
   function ensureOldMenu(page){
-    // Old inline migration blocks are superseded by the compact OLD tray.
     if(page==='lab.html'){
       [...document.querySelectorAll('details')].forEach(d=>{
         if((d.textContent||'').includes('OLD · старі розділи'))d.remove();
@@ -37,14 +36,12 @@
     const menu=document.getElementById('hlOldMenu');
     const trigger=document.querySelector('[data-hl-old-trigger]');
     if(!menu||!trigger)return;
-
     const setOpen=(open)=>{
       menu.classList.toggle('open',open);
       menu.setAttribute('aria-hidden',open?'false':'true');
       trigger.classList.toggle('active',open);
       trigger.setAttribute('aria-expanded',open?'true':'false');
     };
-
     if(!trigger.dataset.hlOldBound){
       trigger.dataset.hlOldBound='1';
       trigger.setAttribute('aria-expanded','false');
@@ -77,9 +74,6 @@
     nav.innerHTML=items.map(([k,href,icon,label])=>`<a class="nav-item ${active===k?'active':''}" href="${href}"><span>${icon}</span><b>${label}</b></a>`).join('')+
       `<button class="nav-item hl-old-trigger" type="button" data-hl-old-trigger aria-controls="hlOldMenu"><span>🗃️</span><b>OLD</b></button>`;
     nav.style.setProperty('grid-template-columns','repeat(4,minmax(0,1fr))','important');
-
-    // Day is the canonical 24/7 view. Keep the underlying timeline implementation,
-    // but present it as the Day surface in the primary UI.
     if(page==='timeline.html'){
       const h=document.querySelector('.topbar h1');if(h)h.textContent='День';
       const e=document.querySelector('.topbar .eyebrow');if(e)e.textContent='HEALTHLAB · 24/7';
@@ -109,7 +103,6 @@
   }
 
   function installSecureEvents(page){
-    // Additive secure Event v2. Keep the legacy journal until authenticated migration is complete.
     if(document.getElementById('eventPhoto')&&!document.querySelector('script[data-hl-event-v2]')){
       if(!document.querySelector('link[data-hl-event-v2-css]')){
         const l=document.createElement('link');l.rel='stylesheet';l.href='./event-v2.css?v=20260912-1';l.dataset.hlEventV2Css='1';document.head.appendChild(l);
@@ -121,12 +114,46 @@
     }
   }
 
+  // Android/PWA browsers may restore Sleep/Day from the back-forward cache.
+  // Canvas bitmaps can then be blank even though data and DOM are still alive.
+  // Repaint on resume; only re-fetch when the page was actually restored.
+  function repaintCharts(refreshData=false){
+    const page=pageName();
+    const repaint=()=>{
+      try{window.dispatchEvent(new Event('resize'))}catch{}
+      try{
+        if(page==='timeline.html'&&typeof window.renderAll==='function')window.renderAll();
+        if(page==='index.html'){
+          if(typeof window.renderPulse==='function')window.renderPulse();
+          if(typeof window.renderStateLab==='function')window.renderStateLab();
+        }
+      }catch(e){console.warn('HealthLab resume repaint',e)}
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(repaint));
+    setTimeout(repaint,120);
+    setTimeout(repaint,420);
+    if(refreshData&&typeof window.load==='function'){
+      setTimeout(()=>{try{window.load()}catch(e){console.warn('HealthLab resume refresh',e)}},180);
+    }
+  }
+
+  function installResumeFix(){
+    if(window.__hlResumeFix)return;
+    window.__hlResumeFix=true;
+    window.addEventListener('pageshow',e=>repaintCharts(!!e.persisted));
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible')repaintCharts(false);
+    });
+    window.addEventListener('focus',()=>repaintCharts(false));
+  }
+
   function install(){
     const page=pageName();
     ensureOldCss();
     installPrimaryNav(page);
     installSleepParity(page);
     installSecureEvents(page);
+    installResumeFix();
   }
   document.addEventListener('DOMContentLoaded',()=>setTimeout(install,0));
   window.addEventListener('load',install);
