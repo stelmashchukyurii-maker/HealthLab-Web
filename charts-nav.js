@@ -1,7 +1,7 @@
 // HealthLab primary navigation + additive secure extensions.
 // Primary information architecture (2026-09-12):
-//   Sleep -> Day (24/7) -> LAB.
-// Research/detail pages remain available internally and are not deleted.
+//   Sleep -> Day (24/7) -> LAB -> OLD popup.
+// OLD is a temporary migration/archive launcher. Legacy pages remain intact until their useful parts are moved.
 (() => {
   function pageName(){return (location.pathname.split('/').pop()||'index.html').toLowerCase()}
   function activeSection(page){
@@ -9,6 +9,54 @@
     if(['timeline.html','activity.html','state.html','charts.html'].includes(page))return 'day';
     return 'sleep';
   }
+
+  function oldMenuMarkup(){
+    return `<div id="hlOldMenu" class="hl-old-menu" aria-hidden="true">
+      <button class="hl-old-backdrop" type="button" data-hl-old-close aria-label="Закрити OLD"></button>
+      <section class="hl-old-sheet" role="dialog" aria-modal="true" aria-label="OLD · старі розділи">
+        <div class="hl-old-head">
+          <div><span>АРХІВ / ПЕРЕНЕСЕННЯ</span><h2>OLD · старі розділи</h2></div>
+          <button class="hl-old-close" type="button" data-hl-old-close aria-label="Закрити">×</button>
+        </div>
+        <p class="hl-old-note">Тут зберігаємо старі екрани, доки не перенесли потрібне у 🌙 Сон, ☀️ День або 🔬 LAB.</p>
+        <div class="hl-old-grid">
+          <a href="./charts.html"><strong>📈 24/7 графіки</strong><small>Старий набір денних графіків</small></a>
+          <a href="./state.html"><strong>🫀 Стан</strong><small>HR · HRV · рух · пояснення</small></a>
+          <a href="./index.html#sleepTrend"><strong>↗ Тренди</strong><small>Попередні тренди</small></a>
+          <a href="./index.html#events"><strong>＋ Події</strong><small>Журнал і маркери</small></a>
+          <a href="./sleep.html"><strong>◒ Sleep / Android</strong><small>Детальний старий sleep-екран</small></a>
+          <a href="./reserve.html"><strong>🔋 Reserve / Battery</strong><small>Експериментальна метрика ресурсу</small></a>
+        </div>
+      </section>
+    </div>`;
+  }
+
+  function ensureOldMenu(page){
+    // The old inline migration block in LAB is superseded by the fourth bottom-nav button.
+    if(page==='lab.html'){
+      [...document.querySelectorAll('details')].forEach(d=>{
+        if((d.textContent||'').includes('OLD · старі розділи'))d.remove();
+      });
+    }
+    if(!document.getElementById('hlOldMenu'))document.body.insertAdjacentHTML('beforeend',oldMenuMarkup());
+    const menu=document.getElementById('hlOldMenu');
+    const trigger=document.querySelector('[data-hl-old-trigger]');
+    const open=()=>{
+      menu.classList.add('open');menu.setAttribute('aria-hidden','false');
+      document.body.classList.add('hl-old-open');trigger?.classList.add('active');
+    };
+    const close=()=>{
+      menu.classList.remove('open');menu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('hl-old-open');trigger?.classList.remove('active');
+    };
+    trigger?.addEventListener('click',open);
+    menu.querySelectorAll('[data-hl-old-close]').forEach(x=>x.addEventListener('click',close));
+    if(!window.__hlOldEscape){
+      window.__hlOldEscape=true;
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+    }
+  }
+
   function installPrimaryNav(page){
     const navs=[...document.querySelectorAll('nav.bottom-nav')];
     if(!navs.length)return;
@@ -22,8 +70,9 @@
       ['day','./timeline.html','☀️','День'],
       ['lab','./lab.html','🔬','LAB']
     ];
-    nav.innerHTML=items.map(([k,href,icon,label])=>`<a class="nav-item ${active===k?'active':''}" href="${href}"><span>${icon}</span><b>${label}</b></a>`).join('');
-    nav.style.setProperty('grid-template-columns','repeat(3,minmax(0,1fr))','important');
+    nav.innerHTML=items.map(([k,href,icon,label])=>`<a class="nav-item ${active===k?'active':''}" href="${href}"><span>${icon}</span><b>${label}</b></a>`).join('')+
+      `<button class="nav-item hl-old-trigger" type="button" data-hl-old-trigger><span>🗃️</span><b>OLD</b></button>`;
+    nav.style.setProperty('grid-template-columns','repeat(4,minmax(0,1fr))','important');
 
     // Day is the canonical 24/7 view. Keep the underlying timeline implementation,
     // but present it as the Day surface in the primary UI.
@@ -33,6 +82,7 @@
       const back=document.querySelector('.timeline-lab-back');if(back)back.style.display='none';
       document.title='HealthLab · День';
     }
+    ensureOldMenu(page);
   }
 
   function installSleepParity(page){
