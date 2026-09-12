@@ -49,6 +49,30 @@ function setNetworkBanner() {
   sendBtn.disabled = !navigator.onLine || sending;
 }
 
+async function copyText(text, button) {
+  const value = String(text || "").trim();
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+  } catch {
+    const area = document.createElement("textarea");
+    area.value = value;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+  if (button) {
+    const old = button.textContent;
+    button.textContent = "✓ Скопійовано";
+    button.classList.add("copied");
+    setTimeout(() => { button.textContent = old; button.classList.remove("copied"); }, 1200);
+  }
+}
+
 async function getToken() {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
@@ -63,17 +87,11 @@ async function api(apiName, { method = "GET", body = null, params = {} } = {}) {
   const url = new URL(FUNCTION_URL);
   url.searchParams.set("api", apiName);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    apikey: SUPABASE_KEY,
-  };
+  const headers = { Authorization: `Bearer ${token}`, apikey: SUPABASE_KEY };
   if (body !== null) headers["Content-Type"] = "application/json";
   const res = await fetch(url, { method, headers, body: body === null ? undefined : JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = data?.error || data?.message || `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
+  if (!res.ok) throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
   return data;
 }
 
@@ -89,6 +107,26 @@ function renderTurn(turn) {
   if (turn.action_result?.ok) badge.hidden = false;
   const statusLabel = turn.status === "done" ? "" : ` · ${turn.status || ""}`;
   node.querySelector(".assistant-meta").textContent = `${turn.turn_id || ""}${statusLabel}`;
+
+  const tools = document.createElement("div");
+  tools.className = "bubble-tools";
+  const copyAnswer = document.createElement("button");
+  copyAnswer.type = "button";
+  copyAnswer.className = "copy-btn";
+  copyAnswer.textContent = "⧉ Копіювати";
+  copyAnswer.addEventListener("click", () => copyText(turn.assistant_text || "", copyAnswer));
+  tools.appendChild(copyAnswer);
+
+  const copyTurn = document.createElement("button");
+  copyTurn.type = "button";
+  copyTurn.className = "copy-btn secondary-copy";
+  copyTurn.textContent = "⧉ Весь turn";
+  copyTurn.addEventListener("click", () => {
+    const block = `TURN: ${turn.turn_id || "—"}\nUSER: ${turn.user_text || ""}\nFLORIVO: ${turn.assistant_text || ""}`;
+    copyText(block, copyTurn);
+  });
+  tools.appendChild(copyTurn);
+  node.querySelector(".assistant-bubble").appendChild(tools);
   return node;
 }
 
@@ -110,9 +148,7 @@ async function loadServiceInfo() {
     if (info.ai_configured === false) {
       serviceBanner.textContent = "Чат уже зберігає повідомлення й HealthLab-події, але AI-відповіді ще потребують серверного OPENAI_API_KEY.";
       serviceBanner.hidden = false;
-    } else {
-      serviceBanner.hidden = true;
-    }
+    } else serviceBanner.hidden = true;
   } catch (e) {
     serviceBanner.textContent = `Сервіс недоступний: ${e.message}`;
     serviceBanner.hidden = false;
@@ -126,46 +162,24 @@ async function syncAuth(session) {
   chatView.hidden = !signedIn;
   composer.hidden = !signedIn;
   signOutBtn.hidden = !signedIn;
-  if (!signedIn) {
-    serviceBanner.hidden = true;
-    return;
-  }
-  if (location.hash || new URLSearchParams(location.search).has("code")) {
-    history.replaceState({}, document.title, location.pathname);
-  }
-  try {
-    await Promise.all([loadServiceInfo(), loadHistory()]);
-  } catch (e) {
-    serviceBanner.textContent = `Не вдалося завантажити чат: ${e.message}`;
-    serviceBanner.hidden = false;
-  }
+  if (!signedIn) { serviceBanner.hidden = true; return; }
+  if (location.hash || new URLSearchParams(location.search).has("code")) history.replaceState({}, document.title, location.pathname);
+  try { await Promise.all([loadServiceInfo(), loadHistory()]); }
+  catch (e) { serviceBanner.textContent = `Не вдалося завантажити чат: ${e.message}`; serviceBanner.hidden = false; }
   messageInput.focus({ preventScroll: true });
 }
 
 loginBtn.addEventListener("click", async () => {
   const email = emailInput.value.trim();
-  if (!email) {
-    loginStatus.textContent = "Введи email.";
-    return;
-  }
+  if (!email) { loginStatus.textContent = "Введи email."; return; }
   loginBtn.disabled = true;
   loginStatus.textContent = "Надсилаю…";
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: location.href, shouldCreateUser: false },
-  });
+  const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href, shouldCreateUser: false } });
   loginBtn.disabled = false;
   loginStatus.textContent = error ? `Помилка: ${error.message}` : "Посилання для входу надіслано на email. Відкрий його на цьому телефоні.";
 });
-
-emailInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") loginBtn.click();
-});
-
-signOutBtn.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  renderHistory([]);
-});
+emailInput.addEventListener("keydown", (e) => { if (e.key === "Enter") loginBtn.click(); });
+signOutBtn.addEventListener("click", async () => { await supabase.auth.signOut(); renderHistory([]); });
 
 composer.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -176,24 +190,12 @@ composer.addEventListener("submit", async (e) => {
   setNetworkBanner();
   messageInput.value = "";
   resizeComposer();
-
-  const optimistic = {
-    turn_id: "…",
-    status: "working",
-    user_text: text,
-    assistant_text: "Думаю…",
-    occurred_at: new Date().toISOString(),
-    action_result: {},
-  };
+  const optimistic = { turn_id: "…", status: "working", user_text: text, assistant_text: "Думаю…", occurred_at: new Date().toISOString(), action_result: {} };
   emptyState.hidden = true;
   messages.append(renderTurn(optimistic));
   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-
   try {
-    await api("send", {
-      method: "POST",
-      body: { project: PROJECT, text, timezone: PROJECT_TZ },
-    });
+    await api("send", { method: "POST", body: { project: PROJECT, text, timezone: PROJECT_TZ } });
     await loadHistory();
     await loadServiceInfo();
   } catch (err) {
@@ -210,38 +212,14 @@ composer.addEventListener("submit", async (e) => {
 });
 
 messageInput.addEventListener("input", resizeComposer);
-messageInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    composer.requestSubmit();
-  }
-});
-
+messageInput.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); composer.requestSubmit(); } });
 window.addEventListener("online", setNetworkBanner);
 window.addEventListener("offline", setNetworkBanner);
 setNetworkBanner();
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredInstall = e;
-  installBtn.hidden = false;
-});
-installBtn.addEventListener("click", async () => {
-  if (!deferredInstall) return;
-  deferredInstall.prompt();
-  await deferredInstall.userChoice;
-  deferredInstall = null;
-  installBtn.hidden = true;
-});
-window.addEventListener("appinstalled", () => {
-  deferredInstall = null;
-  installBtn.hidden = true;
-});
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
-}
-
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; installBtn.hidden = false; });
+installBtn.addEventListener("click", async () => { if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; installBtn.hidden = true; });
+window.addEventListener("appinstalled", () => { deferredInstall = null; installBtn.hidden = true; });
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 supabase.auth.onAuthStateChange((_event, session) => syncAuth(session));
 const { data: initial } = await supabase.auth.getSession();
 await syncAuth(initial.session);
