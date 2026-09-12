@@ -1,15 +1,18 @@
-const CACHE = "healthlab-pwa-v0.1.0";
+const CACHE = "healthlab-pwa-v0.1.1";
 const STATIC = [
   "./timeline.html",
   "./index.html",
   "./lab.html",
+  "./activity.html",
   "./healthlab.webmanifest",
   "./healthlab-icon.svg",
   "./timeline.css?v=20260907-2",
   "./timeline-compact.css?v=20260907-1",
   "./timeline-gestures.css?v=20260907-2",
   "./mode.css?v=20260908-5",
-  "./style.css?v=20260907-2"
+  "./style.css?v=20260907-2",
+  "./activity.css?v=20260912-1",
+  "./activity.js?v=20260912-1"
 ];
 
 self.addEventListener("install", (event) => {
