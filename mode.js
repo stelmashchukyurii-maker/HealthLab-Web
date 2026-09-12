@@ -83,4 +83,17 @@ function hlSetMode(){}
 function hlSavedMode(){return 'sleep'}
 function hlObserveSimple(){if(hlPageName()==='index.html'||hlPageName()==='')hlObserveSleep()}
 
+function hlInstallPwa(){
+  if(!document.querySelector('link[rel="manifest"][data-hl-pwa]')){
+    const m=document.createElement('link');m.rel='manifest';m.href='./healthlab.webmanifest';m.dataset.hlPwa='1';document.head.appendChild(m);
+  }
+  if(!document.querySelector('link[rel="icon"][data-hl-pwa]')){
+    const i=document.createElement('link');i.rel='icon';i.href='./healthlab-icon.svg';i.type='image/svg+xml';i.dataset.hlPwa='1';document.head.appendChild(i);
+  }
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./healthlab-sw.js',{scope:'./'}).catch(()=>{}),{once:true});
+  }
+}
+
+hlInstallPwa();
 document.addEventListener('DOMContentLoaded',hlInstallShell);
