@@ -9,7 +9,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./style.css?v=0.3.0">
+  <link rel="stylesheet" href="./style.css?v=0.3.1">
 </head>
 <body>
   <div class="app-shell">
@@ -19,14 +19,32 @@
         <div class="project-row">
           <span class="project-dot"></span>
           <span>HealthLab Agent</span>
-          <span class="version">v0.3.0</span>
+          <span class="version">v0.3.1</span>
         </div>
       </div>
       <div class="top-actions">
+        <button id="settingsBtn" class="ghost icon-ghost" type="button" aria-label="Налаштування" title="Налаштування">⚙</button>
         <button id="installBtn" class="ghost" type="button" hidden>Встановити</button>
         <button id="signOutBtn" class="ghost" type="button" hidden>Вийти</button>
       </div>
     </header>
+
+    <div id="settingsPanel" class="settings-panel" hidden>
+      <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="settings-head">
+          <strong id="settingsTitle">Налаштування</strong>
+          <button id="settingsClose" class="settings-close" type="button" aria-label="Закрити">×</button>
+        </div>
+        <div class="settings-label">Розмір тексту повідомлень</div>
+        <div class="font-options" role="group" aria-label="Розмір тексту">
+          <button type="button" data-font-scale="1">100%</button>
+          <button type="button" data-font-scale="1.1">110%</button>
+          <button type="button" data-font-scale="1.2">120%</button>
+          <button type="button" data-font-scale="1.3">130%</button>
+        </div>
+        <div class="settings-note">Зміна зберігається тільки на цьому телефоні.</div>
+      </div>
+    </div>
 
     <div id="netBanner" class="banner" hidden>Немає мережі. Нові повідомлення поки не відправляються.</div>
     <div id="serviceBanner" class="banner warning" hidden></div>
@@ -76,6 +94,34 @@
     </article>
   </template>
 
-  <script type="module" src="./app.js?v=0.3.0"></script>
+  <script>
+    (() => {
+      const KEY = "florivo-chat-font-scale";
+      const allowed = new Set(["1", "1.1", "1.2", "1.3"]);
+      const saved = localStorage.getItem(KEY);
+      let current = allowed.has(saved) ? saved : "1";
+      const apply = (value) => {
+        current = allowed.has(String(value)) ? String(value) : "1";
+        document.documentElement.style.setProperty("--chat-font-scale", current);
+        localStorage.setItem(KEY, current);
+        document.querySelectorAll("[data-font-scale]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.fontScale === current);
+        });
+      };
+      apply(current);
+      window.addEventListener("DOMContentLoaded", () => {
+        const panel = document.getElementById("settingsPanel");
+        const open = () => { panel.hidden = false; apply(current); };
+        const close = () => { panel.hidden = true; };
+        document.getElementById("settingsBtn")?.addEventListener("click", open);
+        document.getElementById("settingsClose")?.addEventListener("click", close);
+        panel?.addEventListener("click", (event) => { if (event.target === panel) close(); });
+        document.querySelectorAll("[data-font-scale]").forEach((button) => {
+          button.addEventListener("click", () => apply(button.dataset.fontScale));
+        });
+      });
+    })();
+  </script>
+  <script type="module" src="./app.js?v=0.3.1"></script>
 </body>
 </html>
