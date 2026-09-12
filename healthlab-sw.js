@@ -1,4 +1,4 @@
-const CACHE = "healthlab-pwa-v0.1.7";
+const CACHE = "healthlab-pwa-v0.1.8";
 const STATIC = [
   "./index.html",
   "./timeline.html",
@@ -6,7 +6,7 @@ const STATIC = [
   "./activity.html",
   "./healthlab.webmanifest",
   "./healthlab-icon.svg",
-  "./charts-nav.js?v=20260912-6",
+  "./charts-nav.js?v=20260912-7",
   "./old-menu.css?v=20260912-2",
   "./resource-balance.css?v=20260912-2",
   "./resource-balance.js?v=20260912-1",
