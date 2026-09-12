@@ -137,7 +137,7 @@
     }
   }
 
-  function repaintCharts(refreshData=false){
+  function repaintCharts(){
     const page=pageName();
     const repaint=()=>{
       try{window.dispatchEvent(new Event('resize'))}catch{}
@@ -152,30 +152,46 @@
     requestAnimationFrame(()=>requestAnimationFrame(repaint));
     setTimeout(repaint,120);
     setTimeout(repaint,420);
-    if(refreshData&&typeof window.load==='function'){
-      setTimeout(()=>{try{window.load()}catch(e){console.warn('HealthLab resume refresh',e)}},180);
+  }
+
+  let lastResumeRefresh=0;
+  function triggerRealRefresh(reason='resume'){
+    const page=pageName();
+    if(!['index.html','timeline.html'].includes(page))return;
+    const now=Date.now();
+    if(now-lastResumeRefresh<900)return;
+    lastResumeRefresh=now;
+    const clickRefresh=()=>{
+      const b=document.getElementById('refreshBtn');
+      if(!b)return false;
+      try{b.click();return true}catch(e){console.warn('HealthLab '+reason+' refresh click',e);return false}
+    };
+    setTimeout(clickRefresh,180);
+    // Sleep timeline can still be initializing when the first click arrives.
+    // Retry only when it is visibly still waiting/erroring, not while a real load is active.
+    if(page==='index.html'){
+      setTimeout(()=>{
+        const s=document.getElementById('sleepTimelineStatus');
+        const text=(s?.textContent||'').toLowerCase();
+        if(text.includes('очікую')||text.includes('помилка')||text.includes('немає даних'))clickRefresh();
+      },4200);
     }
   }
 
   function installResumeFix(){
     if(window.__hlResumeFix)return;
     window.__hlResumeFix=true;
-    window.addEventListener('pageshow',e=>{
-      if(e.persisted){
-        const k='hl_bfcache_reload_'+pageName();
-        if(sessionStorage.getItem(k)!=='1'){
-          sessionStorage.setItem(k,'1');
-          location.reload();
-          return;
-        }
-      }
-      sessionStorage.removeItem('hl_bfcache_reload_'+pageName());
-      repaintCharts(true);
+    window.addEventListener('pageshow',()=>{
+      repaintCharts();
+      triggerRealRefresh('pageshow');
     });
     document.addEventListener('visibilitychange',()=>{
-      if(document.visibilityState==='visible')repaintCharts(true);
+      if(document.visibilityState==='visible'){
+        repaintCharts();
+        triggerRealRefresh('visible');
+      }
     });
-    window.addEventListener('focus',()=>repaintCharts(false));
+    window.addEventListener('focus',()=>repaintCharts());
   }
 
   function install(){
