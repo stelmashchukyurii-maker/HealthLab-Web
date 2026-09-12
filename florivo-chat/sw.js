@@ -1,9 +1,10 @@
-const CACHE = "florivo-chat-v0.3.1";
+const CACHE = "florivo-chat-v0.3.2";
 const SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=0.3.1",
-  "./app.js?v=0.3.1",
+  "./style.css?v=0.3.2",
+  "./hr-chart.js?v=0.3.2",
+  "./app.js?v=0.3.2",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png"
