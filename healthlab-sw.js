@@ -8,7 +8,7 @@ const STATIC = [
   "./healthlab-icon.svg",
   "./charts-nav.js?v=20260912-4",
   "./old-menu.css?v=20260912-2",
-  "./resource-balance.css?v=20260912-1",
+  "./resource-balance.css?v=20260912-2",
   "./resource-balance.js?v=20260912-1",
   "./timeline.css?v=20260907-2",
   "./timeline-compact.css?v=20260907-1",
@@ -50,7 +50,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/charts-nav.js') || url.pathname.endsWith('/old-menu.css') || url.pathname.endsWith('/resource-balance.js') || url.pathname.endsWith('/resource-balance.css')) {
+  if (url.pathname.endsWith('/charts-nav.js') || url.pathname.endsWith('/old-menu.css') || url.pathname.endsWith('/resource-balance.css') || url.pathname.endsWith('/resource-balance.js')) {
     event.respondWith(
       fetch(req, {cache:"no-store"}).then((res) => {
         if (res.ok) {
