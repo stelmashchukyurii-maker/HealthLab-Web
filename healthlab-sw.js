@@ -1,4 +1,4 @@
-const CACHE = "healthlab-pwa-v0.1.8";
+const CACHE = "healthlab-pwa-v0.1.9";
 const STATIC = [
   "./index.html",
   "./timeline.html",
@@ -50,7 +50,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/charts-nav.js') || url.pathname.endsWith('/old-menu.css') || url.pathname.endsWith('/resource-balance.css') || url.pathname.endsWith('/resource-balance.js')) {
+  if (url.pathname.endsWith('/charts-nav.js') || url.pathname.endsWith('/old-menu.css') || url.pathname.endsWith('/resource-balance.css') || url.pathname.endsWith('/resource-balance.js') || url.pathname.endsWith('/sleep-timeline.css')) {
     event.respondWith(
       fetch(req, {cache:"no-store"}).then((res) => {
         if (res.ok) {
