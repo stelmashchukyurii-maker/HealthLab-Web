@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#091014">
+<title>HealthLab · App Mockup</title>
+<link rel="icon" href="./healthlab-icon.svg">
+<link rel="stylesheet" href="./app-mockup.css?v=20260913-1">
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <div class="brand"><img src="./healthlab-icon.svg" alt="HealthLab"><div><div class="eyebrow">HEALTHLAB · FUTURE APP</div><h1 id="pageTitle">Сьогодні</h1></div></div>
+    <span class="pill demo">WEB MOCKUP</span>
+  </header>
+
+  <div class="banner">Це безпечний веб-макет майбутньої Android-апки. Частина кнопок працює лише як демонстрація інтерфейсу; реальні сенсорні дії будуть підключатися в Android.</div>
+
+  <section class="page active" data-page="today">
+    <article class="hero"><div class="eyebrow">СТАН ЗАРАЗ</div><h2>HealthLab Today</h2><p>Один оперативний екран: стан, відновлення, ключові сигнали та короткі статуси пристроїв.</p></article>
+    <div class="grid">
+      <article class="card metric"><div class="eyebrow">ПУЛЬС</div><b>—</b><span>уд/хв · LIVE DATA LATER</span></article>
+      <article class="card metric"><div class="eyebrow">HRV</div><b>—</b><span>RMSSD · валідні RR</span></article>
+      <article class="card metric"><div class="eyebrow">ГЛЮКОЗА</div><b>—</b><span>ммоль/л · джерело не підключене</span></article>
+      <article class="card metric"><div class="eyebrow">РЕСУРС</div><b>—</b><span>майбутня Battery / Reserve</span></article>
+    </div>
+    <div class="section-title"><h3>Навантаження і відновлення</h3><small>DEMO</small></div>
+    <article class="card">
+      <div class="chart" aria-label="Демонстраційний графік"><svg viewBox="0 0 600 140" preserveAspectRatio="none"><polyline points="0,70 50,84 90,95 130,77 175,49 225,62 270,83 315,91 355,68 400,39 450,51 500,74 550,59 600,44" fill="none" stroke="#59a9ff" stroke-width="4" vector-effect="non-scaling-stroke"/></svg></div>
+      <div class="legend"><span>Пульс</span><span>HRV</span><span>Рух</span><span>Сон</span><span>Події</span><span>Дихання</span><span>Глюкоза</span></div>
+      <div class="mock-note">Нуль = нейтральний потік ресурсу; нижче = витрата; вище = відновлення. Рух сам по собі не означає «мінус».</div>
+    </article>
+    <div class="section-title"><h3>Пристрої</h3><button class="btn" data-go="devices">Відкрити</button></div>
+    <article class="card"><div class="row"><span>Polar H10</span><b>ANDROID · BLE</b></div><div class="row"><span>Garmin</span><b>DATA SOURCE</b></div><div class="row"><span>Глюкометр</span><b>PLANNED</b></div><div class="row"><span>CGM</span><b>READY DESIGN</b></div></article>
+  </section>
+
+  <section class="page" data-page="sleep">
+    <article class="hero"><div class="eyebrow">СОН / НІЧ</div><h2>Нічний огляд</h2><p>Майбутній мобільний екран для sleep ledger, HR/HRV, дихання, пробуджень і нічних подій.</p></article>
+    <article class="card"><div class="row"><span>Тривалість сну</span><b>—</b></div><div class="row"><span>Нічний HRV</span><b>—</b></div><div class="row"><span>Нічний пульс</span><b>—</b></div><div class="row"><span>Дихання / SpO₂</span><b>—</b></div></article>
+    <a class="small-link" href="./index.html">Відкрити поточний робочий веб-екран Сон →</a>
+  </section>
+
+  <section class="page" data-page="load">
+    <article class="hero"><div class="eyebrow">RESOURCE FLOW</div><h2>Навантаження і відновлення</h2><p>Полігон для формули, пояснення причин і майбутньої персональної Battery/Reserve.</p></article>
+    <article class="card">
+      <div class="chart"><svg viewBox="0 0 600 140" preserveAspectRatio="none"><polyline points="0,62 45,72 95,102 145,88 195,54 245,32 295,58 345,96 395,78 445,43 495,29 550,60 600,51" fill="none" stroke="#61d1a8" stroke-width="4" vector-effect="non-scaling-stroke"/></svg></div>
+      <div class="legend"><span>Пульс</span><span>HRV</span><span>Рух</span><span>Сон</span><span>Події</span><span>Дихання</span><span>Глюкоза</span><span>Усі вимк.</span></div>
+    </article>
+    <a class="small-link" href="./timeline.html">Відкрити поточний робочий Day/Timeline →</a>
+  </section>
+
+  <section class="page" data-page="devices">
+    <article class="hero"><div class="eyebrow">DEVICE HUB · v0 MOCKUP</div><h2>Пристрої та джерела</h2><p>Одна сторінка для фізичних сенсорів, джерел даних, синхронізації, raw/debug і стану підключення.</p></article>
+
+    <div class="section-title"><h3>Підключені / реальні</h3><small>1</small></div>
+    <article class="card">
+      <div class="device"><div class="device-icon">❤️</div><div><h4>Polar H10</h4><p>ECG 130 Hz · HR · RR · ACC</p></div><span class="status android">ANDROID</span></div>
+      <div class="actions"><button class="btn primary mock" data-msg="У веб-макеті BLE не підключаємо. У Android ця кнопка стане реальною.">Підключити</button><button class="btn mock" data-msg="Майбутній екран raw/debug для ECG, RR та ACC.">Raw / Debug</button></div>
+    </article>
+
+    <div class="section-title"><h3>Джерела даних</h3><small>teacher/reference</small></div>
+    <article class="card">
+      <div class="device"><div class="device-icon">⌚</div><div><h4>Garmin</h4><p>RAW / near-raw + готові Garmin-метрики як teacher/reference</p></div><span class="status source">SOURCE</span></div>
+      <div class="actions"><button class="btn mock" data-msg="Garmin Work лише стягує дані. Підключення/аналіз тут не запускаємо.">Статус джерела</button></div>
+      <div class="mock-note">Мета: порівнювати наші алгоритми з Garmin, але не вважати Garmin ground truth.</div>
+    </article>
+
+    <div class="section-title"><h3>Глюкоза</h3><small>підготовка</small></div>
+    <article class="card">
+      <div class="device"><div class="device-icon">🩸</div><div><h4>Bluetooth-глюкометр</h4><p>Точкові вимірювання · модель пристрою ще треба визначити</p></div><span class="status planned">PLANNED</span></div>
+      <div class="actions"><button class="btn mock" data-msg="Після визначення моделі перевіримо стандартний BLE Glucose Service або протокол виробника.">Додати глюкометр</button><button class="btn mock" data-msg="Майбутня історія точкових вимірювань глюкози.">Історія</button></div>
+    </article>
+    <article class="card">
+      <div class="device"><div class="device-icon">〰️</div><div><h4>CGM</h4><p>glucose + trend/rate + timestamp + source + quality</p></div><span class="status planned">CGM READY</span></div>
+      <div class="actions"><button class="btn mock" data-msg="CGM-архітектуру готуємо нейтрально до виробника. Реальний конектор виберемо пізніше.">Підготувати CGM</button></div>
+    </article>
+
+    <div class="section-title"><h3>Sensor Fusion</h3><small>архітектура</small></div>
+    <article class="card">
+      <div class="flow"><span>Garmin</span><i>+</i><span>H10</span><i>+</i><span>Glucose</span><i>+</i><span>CGM</span><i>→</i><span>HealthLab</span></div>
+      <div class="mock-note">Єдина часова шкала: їжа → глюкоза → рух → HR/HRV/autonomic response → glucose recovery.</div>
+    </article>
+  </section>
+
+  <section class="page" data-page="lab">
+    <article class="hero"><div class="eyebrow">RESEARCH</div><h2>LAB</h2><p>Протоколи, калібрування, контрольні тести, дослідницькі графіки та перевірка алгоритмів.</p></article>
+    <article class="card"><div class="row"><span>Walking detector</span><b>окремий research task</b></div><div class="row"><span>Post-meal glucose</span><b>planned protocol</b></div><div class="row"><span>H10 validation</span><b>active research</b></div></article>
+    <a class="small-link" href="./lab.html">Відкрити поточний LAB →</a>
+  </section>
+
+  <div id="toast" class="banner" style="display:none;position:fixed;left:50%;bottom:92px;transform:translateX(-50%);width:min(calc(100% - 24px),590px);z-index:30;background:#233446;border-color:#42617f;color:#e6f2ff"></div>
+</main>
+
+<nav class="bottom" aria-label="HealthLab mockup navigation">
+  <button class="nav active" data-page-btn="today"><span>⌂</span><b>Сьогодні</b></button>
+  <button class="nav" data-page-btn="sleep"><span>☾</span><b>Сон</b></button>
+  <button class="nav" data-page-btn="load"><span>↕</span><b>Ресурс</b></button>
+  <button class="nav" data-page-btn="devices"><span>⌁</span><b>Пристрої</b></button>
+  <button class="nav" data-page-btn="lab"><span>⚗</span><b>LAB</b></button>
+</nav>
+
+<script>
+const titles={today:'Сьогодні',sleep:'Сон',load:'Ресурс',devices:'Пристрої',lab:'LAB'};
+function openPage(name){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.dataset.page===name));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.pageBtn===name));document.getElementById('pageTitle').textContent=titles[name]||'HealthLab';history.replaceState(null,'','#'+name);window.scrollTo({top:0,behavior:'instant'})}
+document.querySelectorAll('[data-page-btn]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.pageBtn)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.go)));
+let tt;document.querySelectorAll('.mock').forEach(b=>b.addEventListener('click',()=>{const t=document.getElementById('toast');t.textContent=b.dataset.msg||'DEMO';t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3200)}));
+const start=location.hash.slice(1);if(titles[start])openPage(start);
+</script>
+</body>
+</html>
