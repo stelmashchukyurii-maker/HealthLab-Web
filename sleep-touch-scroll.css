@@ -1,5 +1,0 @@
-/* HealthLab Sleep graph touch policy — 2026-09-13
-   Keep chart point selection on touch, but allow the browser to take over
-   vertical finger movement for normal page scrolling. This intentionally
-   overrides sleep-timeline.css touch-action:none without changing chart JS. */
-.hl-sleep-canvas-wrap canvas{touch-action:pan-y}
