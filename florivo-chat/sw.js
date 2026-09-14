@@ -1,4 +1,4 @@
-const CACHE = "florivo-chat-v0.3.8";
+const CACHE = "florivo-chat-v0.3.9";
 const SHELL = [
   "./",
   "./index.html",
