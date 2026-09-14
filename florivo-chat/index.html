@@ -22,7 +22,7 @@
         <div class="project-row">
           <span class="project-dot"></span>
           <span>HealthLab Agent</span>
-          <span class="version">v0.3.8</span>
+          <span class="version">v0.3.9</span>
         </div>
       </div>
       <div class="top-actions">
@@ -159,9 +159,55 @@
             location.replace(url.toString());
           }
         });
+
+        const chatView = document.getElementById("chatView");
         const chatTab = document.getElementById("chatTab"), labTab = document.getElementById("labTab"), chatPane = document.getElementById("chatPane"), labPane = document.getElementById("labPane");
-        const selectTab = (tab) => { const lab = tab === "lab"; chatPane.hidden = lab; labPane.hidden = !lab; chatTab.classList.toggle("active", !lab); labTab.classList.toggle("active", lab); chatTab.setAttribute("aria-selected", String(!lab)); labTab.setAttribute("aria-selected", String(lab)); document.body.classList.toggle("lab-tab-active", lab); if (!lab) requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" })); };
-        chatTab?.addEventListener("click", () => selectTab("chat")); labTab?.addEventListener("click", () => selectTab("lab"));
+        const PAGES = ["chat", "lab"];
+        let activePage = "chat";
+
+        const selectPage = (page) => {
+          if (!PAGES.includes(page)) return;
+          activePage = page;
+          const lab = page === "lab";
+          chatPane.hidden = lab;
+          labPane.hidden = !lab;
+          chatTab.classList.toggle("active", !lab);
+          labTab.classList.toggle("active", lab);
+          chatTab.setAttribute("aria-selected", String(!lab));
+          labTab.setAttribute("aria-selected", String(lab));
+          document.body.classList.toggle("lab-tab-active", lab);
+          if (!lab) requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" }));
+        };
+
+        chatTab?.addEventListener("click", () => selectPage("chat"));
+        labTab?.addEventListener("click", () => selectPage("lab"));
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartedOnControl = false;
+        const interactiveSelector = "input,textarea,select,button,a,label,[contenteditable='true']";
+
+        chatView?.addEventListener("touchstart", (event) => {
+          if (event.touches.length !== 1) return;
+          const touch = event.touches[0];
+          touchStartX = touch.clientX;
+          touchStartY = touch.clientY;
+          touchStartedOnControl = Boolean(event.target?.closest?.(interactiveSelector));
+        }, { passive: true });
+
+        chatView?.addEventListener("touchend", (event) => {
+          if (touchStartedOnControl || event.changedTouches.length !== 1) return;
+          const touch = event.changedTouches[0];
+          const dx = touch.clientX - touchStartX;
+          const dy = touch.clientY - touchStartY;
+          const absX = Math.abs(dx);
+          const absY = Math.abs(dy);
+          if (absX < 70 || absX < absY * 1.25) return;
+
+          const currentIndex = PAGES.indexOf(activePage);
+          const nextIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1;
+          if (nextIndex >= 0 && nextIndex < PAGES.length) selectPage(PAGES[nextIndex]);
+        }, { passive: true });
       });
     })();
   </script>
