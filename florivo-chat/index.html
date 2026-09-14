@@ -9,7 +9,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./style.css?v=0.3.4">
+  <link rel="stylesheet" href="./style.css?v=0.3.5">
   <link rel="stylesheet" href="./morning.css?v=0.3.4">
 </head>
 <body>
@@ -20,7 +20,7 @@
         <div class="project-row">
           <span class="project-dot"></span>
           <span>HealthLab Agent</span>
-          <span class="version">v0.3.4</span>
+          <span class="version">v0.3.5</span>
         </div>
       </div>
       <div class="top-actions">
@@ -62,12 +62,21 @@
       </section>
 
       <section id="chatView" class="chat-view" hidden>
-        <div id="emptyState" class="empty-state">
-          <div class="empty-icon">✦</div>
-          <strong>Florivo готовий</strong>
-          <span>Напиши повідомлення або прикріпи фото. HealthLab Agent може фіксувати дозволені події та читати дозволений HealthLab-контекст.</span>
+        <nav class="view-tabs" aria-label="Розділи Florivo">
+          <button id="chatTab" class="view-tab active" type="button" aria-label="Чат" title="Чат" aria-selected="true">💬</button>
+          <button id="labTab" class="view-tab" type="button" aria-label="HealthLab" title="HealthLab" aria-selected="false">🔬</button>
+        </nav>
+
+        <div id="chatPane">
+          <div id="emptyState" class="empty-state">
+            <div class="empty-icon">✦</div>
+            <strong>Florivo готовий</strong>
+            <span>Напиши повідомлення або прикріпи фото. HealthLab Agent може фіксувати дозволені події та читати дозволений HealthLab-контекст.</span>
+          </div>
+          <div id="messages" class="messages" role="log" aria-live="polite"></div>
         </div>
-        <div id="messages" class="messages" role="log" aria-live="polite"></div>
+
+        <section id="labPane" class="lab-pane" aria-label="HealthLab" hidden></section>
       </section>
     </main>
 
@@ -120,6 +129,24 @@
         document.querySelectorAll("[data-font-scale]").forEach((button) => {
           button.addEventListener("click", () => apply(button.dataset.fontScale));
         });
+
+        const chatTab = document.getElementById("chatTab");
+        const labTab = document.getElementById("labTab");
+        const chatPane = document.getElementById("chatPane");
+        const labPane = document.getElementById("labPane");
+        const selectTab = (tab) => {
+          const lab = tab === "lab";
+          chatPane.hidden = lab;
+          labPane.hidden = !lab;
+          chatTab.classList.toggle("active", !lab);
+          labTab.classList.toggle("active", lab);
+          chatTab.setAttribute("aria-selected", String(!lab));
+          labTab.setAttribute("aria-selected", String(lab));
+          document.body.classList.toggle("lab-tab-active", lab);
+          if (!lab) requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" }));
+        };
+        chatTab?.addEventListener("click", () => selectTab("chat"));
+        labTab?.addEventListener("click", () => selectTab("lab"));
       });
     })();
   </script>
