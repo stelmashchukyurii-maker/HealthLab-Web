@@ -1,42 +1,21 @@
-const CACHE = "florivo-chat-v0.3.9";
+const CACHE = "florivo-chat-v0.3.10";
 const SHELL = [
   "./",
   "./index.html",
   "./style.css?v=0.3.6",
   "./morning.css?v=0.3.4",
   "./step-calibration.css?v=0.3.6",
+  "./lab-demo-chart.css?v=0.3.10",
   "./hr-chart.js?v=0.3.4",
   "./app.js?v=0.3.4",
   "./repeat.js?v=0.3.4",
   "./morning.js?v=0.3.4",
   "./step-calibration.js?v=0.3.7",
+  "./lab-demo-chart.js?v=0.3.10",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png"
 ];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => {}));
-  self.skipWaiting();
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-  );
-  self.clients.claim();
-});
-
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  if (req.method !== "GET") return;
-  const url = new URL(req.url);
-  if (url.origin !== location.origin) return;
-  event.respondWith(
-    fetch(req).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
-      return res;
-    }).catch(() => caches.match(req).then((hit) => hit || caches.match("./index.html")))
-  );
-});
+self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(()=>{}));self.skipWaiting()});
+self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
+self.addEventListener("fetch",e=>{const req=e.request;if(req.method!=="GET")return;const url=new URL(req.url);if(url.origin!==location.origin)return;e.respondWith(fetch(req).then(res=>{const copy=res.clone();caches.open(CACHE).then(c=>c.put(req,copy)).catch(()=>{});return res}).catch(()=>caches.match(req).then(hit=>hit||caches.match("./index.html"))))});
