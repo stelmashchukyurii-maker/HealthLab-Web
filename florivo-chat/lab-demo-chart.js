@@ -1,238 +1,37 @@
 (() => {
   const canvas = document.getElementById('labDemoChart');
   const card = document.getElementById('labDemoChartCard');
+  const fullBtn = document.getElementById('labChartFullscreenBtn');
+  const rotateHint = document.getElementById('labChartRotateHint');
   if (!canvas || !card) return;
 
-  // VISUAL DEMO ONLY: 480 three-minute bins across 24 hours. No HealthLab/WHOOP data is read.
-  const BIN_MIN = 3;
-  const DAY_MIN = 24 * 60;
-  const MIN_VIEW_MIN = 60;
-  const values = Array.from({ length: DAY_MIN / BIN_MIN }, (_, i) => {
-    const h = i / 20;
-    const wave = 8 + 5 * Math.sin(i * 0.19) + 3 * Math.sin(i * 0.047);
-    const morning = 27 * Math.exp(-Math.pow((h - 7.0) / 1.55, 2));
-    const noon = 78 * Math.exp(-Math.pow((h - 12.2) / 1.45, 2));
-    const afternoon = 34 * Math.exp(-Math.pow((h - 15.0) / 1.1, 2));
-    const evening = 72 * Math.exp(-Math.pow((h - 17.2) / 1.35, 2));
-    const quietNight = h < 4 ? -6 : 0;
-    return Math.max(1, Math.min(98, wave + morning + noon + afternoon + evening + quietNight));
-  });
+  const BIN_MIN=3, DAY_MIN=1440, MIN_VIEW_MIN=60;
+  const values=Array.from({length:DAY_MIN/BIN_MIN},(_,i)=>{const h=i/20,w=8+5*Math.sin(i*.19)+3*Math.sin(i*.047),m=27*Math.exp(-Math.pow((h-7)/1.55,2)),n=78*Math.exp(-Math.pow((h-12.2)/1.45,2)),a=34*Math.exp(-Math.pow((h-15)/1.1,2)),e=72*Math.exp(-Math.pow((h-17.2)/1.35,2));return Math.max(1,Math.min(98,w+m+n+a+e+(h<4?-6:0)))});
+  let viewStart=0,viewEnd=DAY_MIN,selectedMin=null,pinchBase=null,lastTapAt=0,lastTapX=0,analysis=false;
+  const touches=new Map();
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), span=()=>viewEnd-viewStart;
+  const fmt=m=>{m=((Math.round(m/BIN_MIN)*BIN_MIN)%DAY_MIN+DAY_MIN)%DAY_MIN;return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`};
+  function box(){const r=canvas.getBoundingClientRect(),land=matchMedia('(orientation:landscape)').matches;const left=land||analysis?44:36,right=10,top=34,bottom=land||analysis?30:28;return{r,left,right,top,bottom,pw:r.width-left-right,ph:r.height-top-bottom}}
+  function xMin(x){const b=box();return viewStart+clamp((x-b.r.left-b.left)/Math.max(1,b.pw),0,1)*span()}
+  function minX(m,b){return b.left+((m-viewStart)/span())*b.pw}
+  function tick(s){return s<=90?15:s<=180?30:s<=360?60:s<=720?120:240}
+  function selected(ctx,b){if(!Number.isFinite(selectedMin)||selectedMin<viewStart||selectedMin>viewEnd)return;const x=minX(selectedMin,b),label=fmt(selectedMin);ctx.save();ctx.strokeStyle='#f8fafc';ctx.lineWidth=1.4;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,b.top);ctx.lineTo(x,b.top+b.ph);ctx.stroke();ctx.setLineDash([]);ctx.font='700 12px system-ui,sans-serif';const tw=ctx.measureText(label).width,bw=tw+14,bh=24,bx=clamp(x-bw/2,b.left,b.left+b.pw-bw);ctx.fillStyle='#e2e8f0';ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,3,bw,bh,7):ctx.rect(bx,3,bw,bh);ctx.fill();ctx.fillStyle='#07101f';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,bx+bw/2,15.5);ctx.restore()}
+  function draw(){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);const c=canvas.getContext('2d');c.setTransform(d,0,0,d,0,0);const b=box();c.clearRect(0,0,r.width,r.height);c.font='10px system-ui,sans-serif';c.fillStyle='#94a3b8';c.strokeStyle='rgba(148,163,184,.16)';c.lineWidth=1;for(let v=0;v<=100;v+=20){const y=b.top+b.ph-(v/100)*b.ph;c.beginPath();c.moveTo(b.left,y);c.lineTo(r.width-b.right,y);c.stroke();c.textAlign='right';c.textBaseline='middle';c.fillText(String(v),b.left-6,y)}const t=tick(span()),first=Math.ceil(viewStart/t)*t;for(let m=first;m<=viewEnd+.01;m+=t){const x=minX(m,b);c.beginPath();c.moveTo(x,b.top);c.lineTo(x,b.top+b.ph);c.stroke();c.textAlign='center';c.textBaseline='top';c.fillText(fmt(m),x,b.top+b.ph+7)}const fi=Math.max(0,Math.floor(viewStart/BIN_MIN)),li=Math.min(values.length-1,Math.ceil(viewEnd/BIN_MIN)),slot=b.pw*BIN_MIN/span(),bw=Math.max(.7,slot*.78);c.fillStyle='#3b82f6';for(let i=fi;i<=li;i++){const x=minX(i*BIN_MIN+BIN_MIN/2,b),bh=values[i]/100*b.ph;c.fillRect(x-bw/2,b.top+b.ph-bh,bw,bh)}selected(c,b)}
+  function select(x){selectedMin=clamp(Math.round(xMin(x)/BIN_MIN)*BIN_MIN,0,DAY_MIN-BIN_MIN);draw()}
+  function reset(){viewStart=0;viewEnd=DAY_MIN;draw()}
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),center=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  function beginPinch(){if(touches.size!==2)return;const[a,b]=[...touches.values()],ct=center(a,b);pinchBase={distance:Math.max(1,dist(a,b)),span:span(),centerX:ct.x,centerMinute:xMin(ct.x)}}
+  canvas.addEventListener('touchstart',ev=>{for(const t of ev.changedTouches)touches.set(t.identifier,{x:t.clientX,y:t.clientY});if(touches.size>=2){ev.preventDefault();beginPinch();return}if(touches.size===1){const t=[...touches.values()][0],now=performance.now();if(now-lastTapAt<330&&Math.abs(t.x-lastTapX)<36){reset();lastTapAt=0}else{lastTapAt=now;lastTapX=t.x;select(t.x)}}},{passive:false});
+  canvas.addEventListener('touchmove',ev=>{for(const t of ev.changedTouches)if(touches.has(t.identifier))touches.set(t.identifier,{x:t.clientX,y:t.clientY});if(touches.size>=2&&pinchBase){ev.preventDefault();const[a,b]=[...touches.values()].slice(0,2),ct=center(a,b),target=clamp(pinchBase.span*pinchBase.distance/Math.max(1,dist(a,b)),MIN_VIEW_MIN,DAY_MIN),pb=box(),ratio=clamp((ct.x-pb.r.left-pb.left)/Math.max(1,pb.pw),0,1),translated=pinchBase.centerMinute+((pinchBase.centerX-ct.x)/Math.max(1,pb.pw))*target;let s=clamp(translated-ratio*target,0,DAY_MIN-target);viewStart=s;viewEnd=s+target;draw();return}if(touches.size===1){select([...touches.values()][0].x)}},{passive:false});
+  const touchEnd=ev=>{for(const t of ev.changedTouches)touches.delete(t.identifier);if(touches.size<2)pinchBase=null};canvas.addEventListener('touchend',touchEnd,{passive:false});canvas.addEventListener('touchcancel',touchEnd,{passive:false});
+  canvas.addEventListener('dblclick',e=>{e.preventDefault();reset()});
 
-  let viewStart = 0;
-  let viewEnd = DAY_MIN;
-  let selectedMin = null;
-  const pointers = new Map();
-  let pinchBase = null;
-  let lastTapAt = 0;
-  let lastTapX = 0;
-
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const viewSpan = () => viewEnd - viewStart;
-  const fmtTime = (minute) => {
-    const m = ((Math.round(minute / BIN_MIN) * BIN_MIN) % DAY_MIN + DAY_MIN) % DAY_MIN;
-    const hh = Math.floor(m / 60);
-    const mm = m % 60;
-    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-  };
-
-  function plotBox() {
-    const rect = canvas.getBoundingClientRect();
-    const landscape = matchMedia('(orientation: landscape)').matches && document.body.classList.contains('lab-tab-active');
-    const left = landscape ? 44 : 36;
-    const right = 10;
-    const top = 34;
-    const bottom = landscape ? 30 : 28;
-    return { rect, left, right, top, bottom, pw: rect.width - left - right, ph: rect.height - top - bottom };
-  }
-
-  function xToMinute(clientX) {
-    const { rect, left, pw } = plotBox();
-    if (pw <= 0) return viewStart;
-    const x = clamp(clientX - rect.left - left, 0, pw);
-    return viewStart + (x / pw) * viewSpan();
-  }
-
-  function minuteToX(minute, box) {
-    return box.left + ((minute - viewStart) / viewSpan()) * box.pw;
-  }
-
-  function niceTickMinutes(span) {
-    if (span <= 90) return 15;
-    if (span <= 180) return 30;
-    if (span <= 360) return 60;
-    if (span <= 720) return 120;
-    return 240;
-  }
-
-  function drawSelected(ctx, box) {
-    if (!Number.isFinite(selectedMin) || selectedMin < viewStart || selectedMin > viewEnd) return;
-    const x = minuteToX(selectedMin, box);
-    ctx.save();
-    ctx.strokeStyle = '#f8fafc';
-    ctx.lineWidth = 1.4;
-    ctx.setLineDash([5, 4]);
-    ctx.beginPath();
-    ctx.moveTo(x, box.top);
-    ctx.lineTo(x, box.top + box.ph);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    const label = fmtTime(selectedMin);
-    ctx.font = '700 12px system-ui, sans-serif';
-    const textW = ctx.measureText(label).width;
-    const padX = 7;
-    const bubbleW = textW + padX * 2;
-    const bubbleH = 24;
-    const bubbleX = clamp(x - bubbleW / 2, box.left, box.left + box.pw - bubbleW);
-    const bubbleY = 3;
-    ctx.fillStyle = '#e2e8f0';
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(bubbleX, bubbleY, bubbleW, bubbleH, 7);
-    else ctx.rect(bubbleX, bubbleY, bubbleW, bubbleH);
-    ctx.fill();
-    ctx.fillStyle = '#07101f';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, bubbleX + bubbleW / 2, bubbleY + bubbleH / 2 + .5);
-    ctx.restore();
-  }
-
-  function draw() {
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const w = rect.width, h = rect.height;
-    const box = plotBox();
-    ctx.clearRect(0, 0, w, h);
-    ctx.font = '10px system-ui, sans-serif';
-    ctx.fillStyle = '#94a3b8';
-    ctx.strokeStyle = 'rgba(148,163,184,.16)';
-    ctx.lineWidth = 1;
-
-    for (let v = 0; v <= 100; v += 20) {
-      const y = box.top + box.ph - (v / 100) * box.ph;
-      ctx.beginPath(); ctx.moveTo(box.left, y); ctx.lineTo(w - box.right, y); ctx.stroke();
-      ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(String(v), box.left - 6, y);
-    }
-
-    const tickMin = niceTickMinutes(viewSpan());
-    const firstTick = Math.ceil(viewStart / tickMin) * tickMin;
-    for (let m = firstTick; m <= viewEnd + .01; m += tickMin) {
-      const x = minuteToX(m, box);
-      ctx.beginPath(); ctx.moveTo(x, box.top); ctx.lineTo(x, box.top + box.ph); ctx.stroke();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(fmtTime(m), x, box.top + box.ph + 7);
-    }
-
-    const firstIndex = Math.max(0, Math.floor(viewStart / BIN_MIN));
-    const lastIndex = Math.min(values.length - 1, Math.ceil(viewEnd / BIN_MIN));
-    const slot = box.pw * BIN_MIN / viewSpan();
-    const barW = Math.max(.7, slot * .78);
-    ctx.fillStyle = '#3b82f6';
-    for (let i = firstIndex; i <= lastIndex; i++) {
-      const minute = i * BIN_MIN;
-      const xCenter = minuteToX(minute + BIN_MIN / 2, box);
-      const bh = (values[i] / 100) * box.ph;
-      ctx.fillRect(xCenter - barW / 2, box.top + box.ph - bh, barW, bh);
-    }
-    drawSelected(ctx, box);
-  }
-
-  function setSelectedFromX(clientX) {
-    selectedMin = clamp(Math.round(xToMinute(clientX) / BIN_MIN) * BIN_MIN, 0, DAY_MIN - BIN_MIN);
-    draw();
-  }
-
-  function resetZoom() {
-    viewStart = 0;
-    viewEnd = DAY_MIN;
-    draw();
-  }
-
-  function pointerDistance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
-  function pointerCenter(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
-
-  canvas.addEventListener('pointerdown', (event) => {
-    canvas.setPointerCapture?.(event.pointerId);
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, type: event.pointerType });
-    if (pointers.size === 1) {
-      const now = performance.now();
-      if (now - lastTapAt < 330 && Math.abs(event.clientX - lastTapX) < 36) {
-        resetZoom();
-        lastTapAt = 0;
-      } else {
-        lastTapAt = now;
-        lastTapX = event.clientX;
-        setSelectedFromX(event.clientX);
-      }
-    } else if (pointers.size === 2) {
-      const [a, b] = [...pointers.values()];
-      const center = pointerCenter(a, b);
-      pinchBase = {
-        distance: Math.max(1, pointerDistance(a, b)),
-        span: viewSpan(),
-        start: viewStart,
-        end: viewEnd,
-        centerX: center.x,
-        centerMinute: xToMinute(center.x)
-      };
-    }
-  });
-
-  canvas.addEventListener('pointermove', (event) => {
-    if (!pointers.has(event.pointerId)) return;
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, type: event.pointerType });
-    if (pointers.size === 1) {
-      setSelectedFromX(event.clientX);
-      return;
-    }
-    if (pointers.size === 2 && pinchBase) {
-      event.preventDefault();
-      const [a, b] = [...pointers.values()];
-      const distance = Math.max(1, pointerDistance(a, b));
-      const center = pointerCenter(a, b);
-      const targetSpan = clamp(pinchBase.span * pinchBase.distance / distance, MIN_VIEW_MIN, DAY_MIN);
-      const box = plotBox();
-      const centerRatio = clamp((center.x - box.rect.left - box.left) / Math.max(1, box.pw), 0, 1);
-      const baseBox = plotBox();
-      const baseRatio = clamp((pinchBase.centerX - baseBox.rect.left - baseBox.left) / Math.max(1, baseBox.pw), 0, 1);
-      const translatedMinute = pinchBase.centerMinute + ((pinchBase.centerX - center.x) / Math.max(1, box.pw)) * targetSpan;
-      let start = translatedMinute - centerRatio * targetSpan;
-      if (!Number.isFinite(start)) start = pinchBase.start + (baseRatio - centerRatio) * targetSpan;
-      start = clamp(start, 0, DAY_MIN - targetSpan);
-      viewStart = start;
-      viewEnd = start + targetSpan;
-      draw();
-    }
-  }, { passive: false });
-
-  const endPointer = (event) => {
-    pointers.delete(event.pointerId);
-    if (pointers.size < 2) pinchBase = null;
-  };
-  canvas.addEventListener('pointerup', endPointer);
-  canvas.addEventListener('pointercancel', endPointer);
-  canvas.addEventListener('pointerleave', (event) => { if (event.pointerType !== 'touch') endPointer(event); });
-
-  function syncLandscape() {
-    const landscape = matchMedia('(orientation: landscape)').matches;
-    const active = document.body.classList.contains('lab-tab-active');
-    document.body.classList.toggle('lab-chart-landscape', landscape && active);
-    requestAnimationFrame(draw);
-    setTimeout(draw, 120);
-  }
-
-  new ResizeObserver(draw).observe(canvas);
-  window.addEventListener('orientationchange', () => setTimeout(syncLandscape, 120));
-  window.addEventListener('resize', syncLandscape);
-  document.getElementById('labTab')?.addEventListener('click', () => setTimeout(syncLandscape, 0));
-  document.getElementById('chatTab')?.addEventListener('click', () => {
-    document.body.classList.remove('lab-chart-landscape');
-    requestAnimationFrame(draw);
-  });
-  document.addEventListener('fullscreenchange', draw);
-  syncLandscape();
+  async function enterAnalysis(){analysis=true;document.body.classList.add('lab-chart-analysis');card.classList.add('chart-analysis-mode');fullBtn&&(fullBtn.textContent='×',fullBtn.setAttribute('aria-label','Закрити графік'));try{await card.requestFullscreen?.()}catch(_){}try{if(screen.orientation?.lock)await screen.orientation.lock('landscape')}catch(_){}syncOrientation();setTimeout(draw,100)}
+  async function exitAnalysis(){analysis=false;document.body.classList.remove('lab-chart-analysis');card.classList.remove('chart-analysis-mode');fullBtn&&(fullBtn.textContent='⛶',fullBtn.setAttribute('aria-label','На весь екран'));if(document.fullscreenElement){try{await document.exitFullscreen()}catch(_){}}try{screen.orientation?.unlock?.()}catch(_){}rotateHint&&(rotateHint.hidden=true);setTimeout(draw,100)}
+  function syncOrientation(){const land=matchMedia('(orientation:landscape)').matches;rotateHint&&(rotateHint.hidden=!analysis||land);requestAnimationFrame(draw);setTimeout(draw,100)}
+  fullBtn?.addEventListener('click',()=>analysis?exitAnalysis():enterAnalysis());
+  document.addEventListener('fullscreenchange',()=>{if(analysis&&!document.fullscreenElement&&card.classList.contains('chart-analysis-mode'))exitAnalysis();else syncOrientation()});
+  window.addEventListener('orientationchange',()=>setTimeout(syncOrientation,120));window.addEventListener('resize',syncOrientation);new ResizeObserver(draw).observe(canvas);
+  document.getElementById('chatTab')?.addEventListener('click',()=>{if(analysis)exitAnalysis()});
+  draw();
 })();
