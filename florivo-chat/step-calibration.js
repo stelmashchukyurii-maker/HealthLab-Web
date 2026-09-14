@@ -2,6 +2,7 @@ const STORAGE_KEY = "florivo-step-calibration-v1";
 
 const $ = (id) => document.getElementById(id);
 const dateKey = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Oslo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const currentTime = () => new Intl.DateTimeFormat("uk-UA", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
 
 function loadAll() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
@@ -52,11 +53,9 @@ function render() {
   $("stepHistoryBlock").hidden = !rec.checkpoints?.length;
 }
 
-function setDefaultTime() {
+function setDefaultTime(force = false) {
   const input = $("manualStepTime");
-  if (!input.value) {
-    input.value = new Intl.DateTimeFormat("uk-UA", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
-  }
+  if (input && (force || !input.value)) input.value = currentTime();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -68,6 +67,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   setDefaultTime();
   render();
+
+  manualInput?.addEventListener("input", () => {
+    setDefaultTime(true);
+  });
 
   saveBtn?.addEventListener("click", () => {
     const steps = Number(manualInput.value);
