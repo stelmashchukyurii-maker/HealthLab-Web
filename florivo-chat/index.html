@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./style.css?v=0.3.6">
   <link rel="stylesheet" href="./morning.css?v=0.3.4">
   <link rel="stylesheet" href="./step-calibration.css?v=0.3.6">
+  <style>.view-tabs{top:var(--florivo-topbar-height,67px)!important}</style>
 </head>
 <body>
   <div class="app-shell">
@@ -21,7 +22,7 @@
         <div class="project-row">
           <span class="project-dot"></span>
           <span>HealthLab Agent</span>
-          <span class="version">v0.3.7</span>
+          <span class="version">v0.3.8</span>
         </div>
       </div>
       <div class="top-actions">
@@ -130,6 +131,15 @@
       const apply = (value) => { current = allowed.has(String(value)) ? String(value) : "1"; document.documentElement.style.setProperty("--chat-font-scale", current); localStorage.setItem(KEY, current); document.querySelectorAll("[data-font-scale]").forEach((button) => button.classList.toggle("active", button.dataset.fontScale === current)); };
       apply(current);
       window.addEventListener("DOMContentLoaded", () => {
+        const topbar = document.querySelector(".topbar");
+        const syncTopbarOffset = () => {
+          const height = Math.ceil(topbar?.getBoundingClientRect().height || 67);
+          document.documentElement.style.setProperty("--florivo-topbar-height", `${height}px`);
+        };
+        syncTopbarOffset();
+        if (topbar && "ResizeObserver" in window) new ResizeObserver(syncTopbarOffset).observe(topbar);
+        window.addEventListener("resize", syncTopbarOffset);
+
         const panel = document.getElementById("settingsPanel");
         const open = () => { panel.hidden = false; apply(current); };
         const close = () => { panel.hidden = true; };
