@@ -9,7 +9,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./style.css?v=0.3.5">
+  <link rel="stylesheet" href="./style.css?v=0.3.6">
   <link rel="stylesheet" href="./morning.css?v=0.3.4">
 </head>
 <body>
@@ -20,7 +20,7 @@
         <div class="project-row">
           <span class="project-dot"></span>
           <span>HealthLab Agent</span>
-          <span class="version">v0.3.5</span>
+          <span class="version">v0.3.6</span>
         </div>
       </div>
       <div class="top-actions">
@@ -76,7 +76,55 @@
           <div id="messages" class="messages" role="log" aria-live="polite"></div>
         </div>
 
-        <section id="labPane" class="lab-pane" aria-label="HealthLab" hidden></section>
+        <section id="labPane" class="lab-pane" aria-label="HealthLab" hidden>
+          <div class="step-calibration-card">
+            <div class="step-title">Калібровка кроків</div>
+            <div class="step-note">Поки що це локальний журнал на цьому телефоні. WHOOP/HealthLab bridge під'єднаємо окремо.</div>
+
+            <div class="step-grid">
+              <div class="step-box">
+                <div class="step-label">WHOOP · загальне</div>
+                <div id="whoopStepsValue" class="step-value">—</div>
+                <div class="step-inline">
+                  <input id="whoopStepsInput" type="number" min="0" inputmode="numeric" placeholder="Ввести тимчасово">
+                  <button id="saveWhoopSteps" type="button">OK</button>
+                </div>
+              </div>
+
+              <div class="step-box manual-box">
+                <div class="step-label">Контрольна точка</div>
+                <div class="step-subgrid">
+                  <div>
+                    <span class="step-mini">Я вніс</span>
+                    <strong id="manualLatestValue">—</strong>
+                    <small id="manualLatestTime">—</small>
+                  </div>
+                  <div>
+                    <span class="step-mini">AI оцінка</span>
+                    <strong id="aiStepsValue">—</strong>
+                    <small>після калібровки</small>
+                  </div>
+                </div>
+                <div class="step-input-row">
+                  <input id="manualStepTime" type="time">
+                  <input id="manualStepsInput" type="number" min="0" inputmode="numeric" placeholder="Кроки">
+                  <button id="saveManualSteps" type="button">Зберегти</button>
+                </div>
+              </div>
+
+              <div class="step-box">
+                <div class="step-label">WHOOP − контрольна точка</div>
+                <div id="remainingStepsValue" class="step-value">—</div>
+                <div class="step-caption">Різниця після останнього ручного значення.</div>
+              </div>
+            </div>
+
+            <div id="stepHistoryBlock" class="step-history" hidden>
+              <div class="step-history-title">Сьогодні</div>
+              <div id="stepCheckpointList"></div>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
 
@@ -154,5 +202,6 @@
   <script type="module" src="./app.js?v=0.3.4"></script>
   <script type="module" src="./repeat.js?v=0.3.4"></script>
   <script type="module" src="./morning.js?v=0.3.4"></script>
+  <script type="module" src="./step-calibration.js?v=0.3.6"></script>
 </body>
 </html>
