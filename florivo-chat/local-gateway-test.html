@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Florivo · Local Gateway Test</title>
+<style>body{font-family:system-ui;background:#0b0d10;color:#eef2f5;margin:0;padding:18px}button,select{font:inherit;padding:12px;margin:5px 0;width:100%;border-radius:10px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#15191e;padding:12px;border-radius:10px}.ok{color:#55d98b}.bad{color:#ff7a7a}</style></head>
+<body><h2>FLORIVO · Local Gateway</h2><p id="status">Ще не перевірено</p>
+<button id="ping">1. Перевірити HealthLab localhost</button>
+<button id="tables">2. Показати локальні таблиці</button>
+<select id="table"><option value="hrSample">hrSample</option><option value="rrInterval">rrInterval</option><option value="spo2Sample">spo2Sample</option><option value="respSample">respSample</option><option value="gravitySample">gravitySample</option><option value="sleepSession">sleepSession</option><option value="dailyMetric">dailyMetric</option><option value="event">event</option></select>
+<button id="read">3. Показати 20 рядків</button><pre id="out">—</pre>
+<script>
+const BASE='http://127.0.0.1:18765'; const out=document.querySelector('#out'), status=document.querySelector('#status');
+async function localFetch(path){
+  try { return await fetch(BASE+path,{cache:'no-store',targetAddressSpace:'loopback'}); }
+  catch(e){ return await fetch(BASE+path,{cache:'no-store'}); }
+}
+async function run(path){ status.textContent='З’єднуюсь…'; status.className=''; try{const r=await localFetch(path);const j=await r.json();out.textContent=JSON.stringify(j,null,2);status.textContent=j.ok?'LOCAL OK · noop_whoop.db':'Помилка Local Gateway';status.className=j.ok?'ok':'bad';}catch(e){status.textContent='Немає з’єднання з HealthLab localhost';status.className='bad';out.textContent=String(e);}}
+document.querySelector('#ping').onclick=()=>run('/health');
+document.querySelector('#tables').onclick=()=>run('/tables');
+document.querySelector('#read').onclick=()=>run('/read?table='+encodeURIComponent(document.querySelector('#table').value)+'&limit=20');
+</script></body></html>
