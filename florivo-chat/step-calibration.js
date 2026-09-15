@@ -4,51 +4,9 @@ const LOCAL_GATEWAY = "http://127.0.0.1:18765";
 const $ = (id) => document.getElementById(id);
 const dateKey = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Oslo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const currentTime = () => new Intl.DateTimeFormat("uk-UA", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
-
-function loadAll() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; } }
-function saveAll(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-function todayRecord() { const all = loadAll(); const day = dateKey(); return { all, day, rec: all[day] || { whoop_total: null, checkpoints: [], ai_estimate: null } }; }
-function fmt(value) { return Number.isFinite(Number(value)) ? Math.round(Number(value)).toLocaleString("uk-UA") : "—"; }
-
-function render() {
-  const { rec } = todayRecord();
-  const whoop = rec.whoop_total == null ? NaN : Number(rec.whoop_total);
-  const latest = rec.checkpoints?.length ? rec.checkpoints[rec.checkpoints.length - 1] : null;
-  const manual = latest ? Number(latest.steps) : NaN;
-  const ai = rec.ai_estimate == null ? NaN : Number(rec.ai_estimate);
-  $("whoopStepsValue").textContent = fmt(whoop);
-  $("manualLatestValue").textContent = fmt(manual);
-  $("manualLatestTime").textContent = latest?.time || "—";
-  $("aiStepsValue").textContent = fmt(ai);
-  const remainder = Number.isFinite(whoop) && Number.isFinite(manual) ? Math.max(0, whoop - manual) : NaN;
-  $("remainingStepsValue").textContent = fmt(remainder);
-  const list = $("stepCheckpointList"); list.replaceChildren();
-  for (const item of [...(rec.checkpoints || [])].reverse().slice(0, 8)) { const row=document.createElement("div"); row.className="step-log-row"; const time=document.createElement("span"); time.textContent=item.time||"—"; const value=document.createElement("b"); value.textContent=`${fmt(item.steps)} кроків`; row.append(time,value); list.append(row); }
-  $("stepHistoryBlock").hidden = !rec.checkpoints?.length;
-}
-
-function setDefaultTime(force=false){ const input=$("manualStepTime"); if(input&&(force||!input.value)) input.value=currentTime(); }
-async function gatewayFetch(path){ try{return await fetch(LOCAL_GATEWAY+path,{cache:"no-store",targetAddressSpace:"loopback"});}catch{return fetch(LOCAL_GATEWAY+path,{cache:"no-store"});} }
-function rowsOf(j){ if(Array.isArray(j))return j; for(const k of ["rows","data","items","result"])if(Array.isArray(j?.[k]))return j[k]; return j?.row?[j.row]:[]; }
-async function latest(table){ const r=await gatewayFetch(`/read?table=${encodeURIComponent(table)}&limit=1`); if(!r.ok)throw new Error(String(r.status)); return rowsOf(await r.json())[0]||null; }
-async function hydrateLocal(){
-  try{
-    const [hr,g]=await Promise.all([latest("hrSample"),latest("gravitySample")]);
-    const note=document.querySelector(".step-note");
-    if(note) note.textContent="Локальний журнал + живі read-only дані HealthLab. Ручні контрольні точки зберігаються тільки на цьому телефоні.";
-    const whoopLabel=document.querySelector("#whoopStepsValue")?.previousElementSibling;
-    if(whoopLabel) whoopLabel.textContent="WHOOP · пульс зараз";
-    if($("whoopStepsValue") && hr) $("whoopStepsValue").textContent=`${hr.bpm ?? hr.hr ?? "—"} BPM`;
-    const remainingLabel=$("remainingStepsValue")?.previousElementSibling;
-    if(remainingLabel) remainingLabel.textContent="Рух · gravitySample";
-    if($("remainingStepsValue") && g){ const x=Number(g.x),y=Number(g.y),z=Number(g.z); $("remainingStepsValue").textContent=[x,y,z].every(Number.isFinite)?`X ${x.toFixed(2)} · Y ${y.toFixed(2)} · Z ${z.toFixed(2)}`:"дані є"; }
-  }catch{ /* local gateway is optional; preserve calibration UI */ }
-}
-
-window.addEventListener("DOMContentLoaded",()=>{
-  const saveBtn=$("saveManualSteps"),manualInput=$("manualStepsInput"),timeInput=$("manualStepTime"),whoopInput=$("whoopStepsInput"),saveWhoopBtn=$("saveWhoopSteps");
-  setDefaultTime(); render(); hydrateLocal(); setInterval(()=>{ if(!document.hidden) hydrateLocal(); },2000);
-  manualInput?.addEventListener("input",()=>setDefaultTime(true));
-  saveBtn?.addEventListener("click",()=>{ const steps=Number(manualInput.value),time=timeInput.value; if(!Number.isFinite(steps)||steps<0||!time)return; const {all,day,rec}=todayRecord(); rec.checkpoints=Array.isArray(rec.checkpoints)?rec.checkpoints:[]; rec.checkpoints.push({time,steps:Math.round(steps),saved_at:new Date().toISOString()}); rec.checkpoints.sort((a,b)=>String(a.time).localeCompare(String(b.time))); all[day]=rec; saveAll(all); manualInput.value=""; render(); hydrateLocal(); });
-  saveWhoopBtn?.addEventListener("click",()=>{ const value=Number(whoopInput.value); if(!Number.isFinite(value)||value<0)return; const {all,day,rec}=todayRecord(); rec.whoop_total=Math.round(value); all[day]=rec; saveAll(all); whoopInput.value=""; render(); hydrateLocal(); });
-});
+function loadAll(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")}catch{return{}}} function saveAll(data){localStorage.setItem(STORAGE_KEY,JSON.stringify(data))} function todayRecord(){const all=loadAll(),day=dateKey();return{all,day,rec:all[day]||{whoop_total:null,checkpoints:[],ai_estimate:null}}} function fmt(value){return Number.isFinite(Number(value))?Math.round(Number(value)).toLocaleString("uk-UA"):"—"}
+function render(){const{rec}=todayRecord(),whoop=rec.whoop_total==null?NaN:Number(rec.whoop_total),latest=rec.checkpoints?.length?rec.checkpoints[rec.checkpoints.length-1]:null,manual=latest?Number(latest.steps):NaN,ai=rec.ai_estimate==null?NaN:Number(rec.ai_estimate);$("whoopStepsValue").textContent=fmt(whoop);$("manualLatestValue").textContent=fmt(manual);$("manualLatestTime").textContent=latest?.time||"—";$("aiStepsValue").textContent=fmt(ai);const remainder=Number.isFinite(whoop)&&Number.isFinite(manual)?Math.max(0,whoop-manual):NaN;$("remainingStepsValue").textContent=fmt(remainder);const list=$("stepCheckpointList");list.replaceChildren();for(const item of[...(rec.checkpoints||[])].reverse().slice(0,8)){const row=document.createElement("div");row.className="step-log-row";const time=document.createElement("span");time.textContent=item.time||"—";const value=document.createElement("b");value.textContent=`${fmt(item.steps)} кроків`;row.append(time,value);list.append(row)}$("stepHistoryBlock").hidden=!rec.checkpoints?.length}
+function setDefaultTime(force=false){const input=$("manualStepTime");if(input&&(force||!input.value))input.value=currentTime()} async function gatewayFetch(path){try{return await fetch(LOCAL_GATEWAY+path,{cache:"no-store",targetAddressSpace:"loopback"})}catch{return fetch(LOCAL_GATEWAY+path,{cache:"no-store"})}} function rowsOf(j){if(Array.isArray(j))return j;for(const k of["rows","data","items","result"])if(Array.isArray(j?.[k]))return j[k];return j?.row?[j.row]:[]} async function latest(table){const r=await gatewayFetch(`/read?table=${encodeURIComponent(table)}&limit=1`);if(!r.ok)throw new Error(String(r.status));return rowsOf(await r.json())[0]||null}
+function publishLocal(hr,g){window.dispatchEvent(new CustomEvent("florivo:local-sensors",{detail:{ok:true,hr,g,at:Date.now()}}))}
+async function hydrateLocal(){try{const[hr,g]=await Promise.all([latest("hrSample"),latest("gravitySample")]);const note=document.querySelector(".step-note");if(note)note.textContent="Локальний журнал + живі read-only дані HealthLab. Ручні контрольні точки зберігаються тільки на цьому телефоні.";const whoopLabel=document.querySelector("#whoopStepsValue")?.previousElementSibling;if(whoopLabel)whoopLabel.textContent="WHOOP · пульс зараз";if($("whoopStepsValue")&&hr)$("whoopStepsValue").textContent=`${hr.bpm??hr.hr??"—"} BPM`;const remainingLabel=$("remainingStepsValue")?.previousElementSibling;if(remainingLabel)remainingLabel.textContent="Рух · gravitySample";if($("remainingStepsValue")&&g){const x=Number(g.x),y=Number(g.y),z=Number(g.z);$("remainingStepsValue").textContent=[x,y,z].every(Number.isFinite)?`X ${x.toFixed(2)} · Y ${y.toFixed(2)} · Z ${z.toFixed(2)}`:"дані є"}publishLocal(hr,g)}catch{/* local gateway optional; preserve calibration UI */}}
+window.addEventListener("DOMContentLoaded",()=>{const saveBtn=$("saveManualSteps"),manualInput=$("manualStepsInput"),timeInput=$("manualStepTime"),whoopInput=$("whoopStepsInput"),saveWhoopBtn=$("saveWhoopSteps");setDefaultTime();render();hydrateLocal();setInterval(()=>{if(!document.hidden)hydrateLocal()},2000);manualInput?.addEventListener("input",()=>setDefaultTime(true));saveBtn?.addEventListener("click",()=>{const steps=Number(manualInput.value),time=timeInput.value;if(!Number.isFinite(steps)||steps<0||!time)return;const{all,day,rec}=todayRecord();rec.checkpoints=Array.isArray(rec.checkpoints)?rec.checkpoints:[];rec.checkpoints.push({time,steps:Math.round(steps),saved_at:new Date().toISOString()});rec.checkpoints.sort((a,b)=>String(a.time).localeCompare(String(b.time)));all[day]=rec;saveAll(all);manualInput.value="";render();hydrateLocal()});saveWhoopBtn?.addEventListener("click",()=>{const value=Number(whoopInput.value);if(!Number.isFinite(value)||value<0)return;const{all,day,rec}=todayRecord();rec.whoop_total=Math.round(value);all[day]=rec;saveAll(all);whoopInput.value="";render();hydrateLocal()})});
