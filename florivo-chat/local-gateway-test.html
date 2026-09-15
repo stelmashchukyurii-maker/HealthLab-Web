@@ -1,19 +1,14 @@
 <!doctype html>
-<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Florivo · Local Gateway Test</title>
-<style>body{font-family:system-ui;background:#0b0d10;color:#eef2f5;margin:0;padding:18px}button,select{font:inherit;padding:12px;margin:5px 0;width:100%;border-radius:10px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#15191e;padding:12px;border-radius:10px}.ok{color:#55d98b}.bad{color:#ff7a7a}</style></head>
-<body><h2>FLORIVO · Local Gateway</h2><p id="status">Ще не перевірено</p>
-<button id="ping">1. Перевірити HealthLab localhost</button>
-<button id="tables">2. Показати локальні таблиці</button>
-<select id="table"><option value="hrSample">hrSample</option><option value="rrInterval">rrInterval</option><option value="spo2Sample">spo2Sample</option><option value="respSample">respSample</option><option value="gravitySample">gravitySample</option><option value="sleepSession">sleepSession</option><option value="dailyMetric">dailyMetric</option><option value="event">event</option></select>
-<button id="read">3. Показати 20 рядків</button><pre id="out">—</pre>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Florivo Local Gateway Test</title>
+<style>body{font-family:system-ui;background:#0b0d10;color:#eef2f5;margin:0;padding:18px}button,select{font:inherit;padding:12px;margin:5px 0;width:100%;border-radius:10px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#15191e;padding:12px;border-radius:10px}.ok{color:#55d98b}.bad{color:#ff7a7a}.live{font-size:32px;font-weight:700;margin:10px 0}</style></head><body>
+<h2>FLORIVO - Local Gateway</h2><p id="status">Ще не перевірено</p>
+<button id="ping">1. Перевірити HealthLab localhost</button><button id="tables">2. Показати локальні таблиці</button>
+<select id="table"><option>hrSample</option><option>rrInterval</option><option>spo2Sample</option><option>respSample</option><option>gravitySample</option><option>sleepSession</option><option>dailyMetric</option><option>event</option></select>
+<button id="read">3. Показати 20 рядків</button><button id="live">4. Підключити Live HR</button><p id="ws">WS: не підключено</p><div class="live" id="bpm">- BPM</div><pre id="out">-</pre>
 <script>
-const BASE='http://127.0.0.1:18765'; const out=document.querySelector('#out'), status=document.querySelector('#status');
-async function localFetch(path){
-  try { return await fetch(BASE+path,{cache:'no-store',targetAddressSpace:'loopback'}); }
-  catch(e){ return await fetch(BASE+path,{cache:'no-store'}); }
-}
-async function run(path){ status.textContent='З’єднуюсь…'; status.className=''; try{const r=await localFetch(path);const j=await r.json();out.textContent=JSON.stringify(j,null,2);status.textContent=j.ok?'LOCAL OK · noop_whoop.db':'Помилка Local Gateway';status.className=j.ok?'ok':'bad';}catch(e){status.textContent='Немає з’єднання з HealthLab localhost';status.className='bad';out.textContent=String(e);}}
-document.querySelector('#ping').onclick=()=>run('/health');
-document.querySelector('#tables').onclick=()=>run('/tables');
-document.querySelector('#read').onclick=()=>run('/read?table='+encodeURIComponent(document.querySelector('#table').value)+'&limit=20');
+const BASE='http://127.0.0.1:18765',out=document.querySelector('#out'),status=document.querySelector('#status'),ws=document.querySelector('#ws'),bpm=document.querySelector('#bpm');let sock;
+async function lf(p){try{return await fetch(BASE+p,{cache:'no-store',targetAddressSpace:'loopback'})}catch(e){return fetch(BASE+p,{cache:'no-store'})}}
+async function run(p){try{const r=await lf(p),j=await r.json();out.textContent=JSON.stringify(j,null,2);status.textContent=j.ok?'LOCAL OK - noop_whoop.db':'Local Gateway error';status.className=j.ok?'ok':'bad'}catch(e){status.textContent='Немає з’єднання з HealthLab localhost';status.className='bad';out.textContent=String(e)}}
+ping.onclick=()=>run('/health');tables.onclick=()=>run('/tables');read.onclick=()=>run('/read?table='+encodeURIComponent(table.value)+'&limit=20');
+live.onclick=()=>{if(sock)try{sock.close()}catch(e){};ws.textContent='WS: з’єднуюсь...';ws.className='';bpm.textContent='- BPM';try{sock=new WebSocket('ws://127.0.0.1:18765/live');sock.onopen=()=>{ws.textContent='WS: ПІДКЛЮЧЕНО';ws.className='ok'};sock.onmessage=e=>{try{const j=JSON.parse(e.data);out.textContent=JSON.stringify(j,null,2);if(j.row&&j.row.bpm!=null)bpm.textContent=j.row.bpm+' BPM'}catch(x){out.textContent=e.data}};sock.onerror=()=>{ws.textContent='WS: ПОМИЛКА';ws.className='bad'};sock.onclose=()=>{if(ws.className!=='bad'){ws.textContent='WS: ВІДКЛЮЧЕНО';ws.className=''}}}catch(e){ws.textContent='WS: ПОМИЛКА';ws.className='bad'}};
 </script></body></html>
