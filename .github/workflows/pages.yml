@@ -2,7 +2,8 @@ name: Deploy HealthLab Web
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
