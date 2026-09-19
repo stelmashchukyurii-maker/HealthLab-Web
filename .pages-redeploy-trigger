@@ -1,0 +1,3 @@
+HealthLab-Web GitHub Pages redeploy trigger
+2026-09-19
+Purpose: trigger branch-based Pages rebuild without modifying Florivo protected/known-good components.
