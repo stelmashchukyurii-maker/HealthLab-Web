@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
   <meta name="theme-color" content="#0f172a"><meta name="color-scheme" content="dark">
   <title>Florivo Chart Lab</title>
-  <link rel="stylesheet" href="./style.css?v=0.3.36">
-  <link rel="stylesheet" href="./lab-demo-chart.css?v=0.3.36">
+  <link rel="stylesheet" href="./style.css?v=0.3.37">
+  <link rel="stylesheet" href="./lab-demo-chart.css?v=0.3.37">
   <style>body{margin:0;background:#070d19;color:#e5edf8;font-family:system-ui,sans-serif}.chart-lab-shell{padding:18px 14px 28px}.chart-lab-title{font-size:22px;font-weight:750;margin:4px 6px 4px}.chart-lab-sub{color:#8fa0b8;font-size:13px;margin:0 6px 14px}.lab-demo-chart-card{margin:0!important}.chart-lab-badge{font-size:12px;color:#8fa0b8;margin:12px 6px 0}</style>
 </head>
 <body>
@@ -20,6 +20,6 @@
     </div>
     <div class="chart-lab-badge">Оригінальний графік у 🔬 HealthLab не змінено.</div>
   </main>
-  <script src="./lab-demo-chart.js?v=0.3.36"></script>
-</body>
+  <script src="./lab-demo-chart.js?v=0.3.37"></script>
+<script>(()=>{let sx=0,sy=0,control=false;const interactive='button,input,textarea,select,a,label,[contenteditable="true"]';document.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;control=Boolean(e.target?.closest?.(interactive))},{passive:true});document.addEventListener('touchend',e=>{if(control||e.changedTouches.length!==1)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.25)return;parent.postMessage({type:'florivo-iframe-swipe-v1',page:'chart',direction:dx<0?'next':'prev',dx:Math.round(dx)},location.origin)},{passive:true})})();</script></body>
 </html>
