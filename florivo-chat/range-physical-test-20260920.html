@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HealthLab /range physical acceptance</title><style>body{font-family:system-ui;background:#0b0d10;color:#eef2f5;margin:0;padding:18px}button{font:inherit;padding:14px;width:100%;border-radius:12px;margin:8px 0}pre{background:#101419;padding:12px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}.ok{color:#55d98b}.bad{color:#ff7a7a}</style></head>
+<body><h2>HealthLab /range physical acceptance</h2><p>Temporary non-protected test surface. Read-only hrSample, last 24h, limit 5.</p><button id="run">TEST /range</button><p id="status">Ready</p><pre id="out">-</pre>
+<script>
+const BASE='http://127.0.0.1:18765',status=document.querySelector('#status'),out=document.querySelector('#out');
+async function lf(url){try{return await fetch(url,{cache:'no-store',targetAddressSpace:'loopback'})}catch(e){return fetch(url,{cache:'no-store'})}}
+document.querySelector('#run').onclick=async()=>{status.textContent='Testing...';status.className='';const to=Math.floor(Date.now()/1000),from=to-86400,url=BASE+'/range?table=hrSample&from='+from+'&to='+to+'&limit=5';try{const r=await lf(url),text=await r.text();let j;try{j=JSON.parse(text)}catch(e){throw new Error('Non-JSON HTTP '+r.status+': '+text)}out.textContent=JSON.stringify(j,null,2);const pass=r.ok&&j.ok===true&&j.route==='LOCAL'&&j.store==='noop_whoop.db'&&j.read_only===true&&j.api==='historical_range_v1'&&j.table==='hrSample'&&Number.isInteger(j.count)&&Array.isArray(j.rows)&&j.count===j.rows.length&&j.count>0&&typeof j.has_more==='boolean'&&('next_cursor_ts' in j)&&('next_cursor_rowid' in j);status.textContent=pass?'CANDIDATE PASS — send screenshot':'NOT PASS — send screenshot';status.className=pass?'ok':'bad'}catch(e){status.textContent='ERROR — send screenshot';status.className='bad';out.textContent=String(e)}};
+</script></body></html>
