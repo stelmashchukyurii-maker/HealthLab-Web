@@ -10,7 +10,7 @@ const MAX_ATTACHMENTS = 3;
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_IMAGE_SIDE = 1600;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); window.supabaseClient=supabase; window.dispatchEvent(new Event("florivo-supabase-ready"));
 const $ = id => document.getElementById(id), authView=$("authView"),chatView=$("chatView"),composer=$("composer"),messages=$("messages"),emptyState=$("emptyState"),emailInput=$("emailInput"),loginBtn=$("loginBtn"),loginStatus=$("loginStatus"),signOutBtn=$("signOutBtn"),installBtn=$("installBtn"),messageInput=$("messageInput"),sendBtn=$("sendBtn"),attachBtn=$("attachBtn"),photoInput=$("photoInput"),attachmentPreview=$("attachmentPreview"),serviceBanner=$("serviceBanner"),netBanner=$("netBanner"),bubbleTemplate=$("bubbleTemplate");
 let activeSession=null,sending=false,deferredInstall=null,retryRequest=null,pendingFiles=[],previewUrls=[];
 function formatTime(iso){try{return new Intl.DateTimeFormat("uk-UA",{timeZone:PROJECT_TZ,hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"}).format(new Date(iso))}catch{return""}}
