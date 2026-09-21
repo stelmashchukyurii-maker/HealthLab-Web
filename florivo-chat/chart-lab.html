@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
   <meta name="theme-color" content="#0f172a"><meta name="color-scheme" content="dark">
   <title>Florivo Chart Lab</title>
-  <link rel="stylesheet" href="./style.css?v=0.3.38">
-  <link rel="stylesheet" href="./lab-demo-chart.css?v=0.3.38">
+  <link rel="stylesheet" href="./style.css?v=0.3.40">
+  <link rel="stylesheet" href="./lab-demo-chart.css?v=0.3.40">
   <style>body{margin:0;background:#070d19;color:#e5edf8;font-family:system-ui,sans-serif}.chart-lab-shell{padding:18px 14px 28px}.chart-lab-title{font-size:22px;font-weight:750;margin:4px 6px 4px}.chart-lab-sub{color:#8fa0b8;font-size:13px;margin:0 6px 14px}.lab-demo-chart-card{margin:0!important}.chart-lab-badge{font-size:12px;color:#8fa0b8;margin:12px 6px 0}</style>
 </head>
 <body>
   <main class="chart-lab-shell">
     <div class="chart-lab-title">Графік · LAB</div>
-    <div class="chart-lab-sub">Окрема копія для поступового підключення реальних даних HealthLab.</div>
-    <div id="labDemoChartCard" class="lab-demo-chart-card" data-chart-gesture aria-label="Експериментальний 24-годинний графік">
-      <div class="lab-demo-chart-head"><span>Останні 24 години</span><button id="labChartFullscreenBtn" class="lab-chart-fullscreen-btn" type="button" aria-label="На весь екран" title="На весь екран">⛶</button></div>
+    <div class="chart-lab-sub">Реальні локальні RR-інтервали HealthLab через read-only /range.</div>
+    <div id="labDemoChartCard" class="lab-demo-chart-card" data-chart-gesture aria-label="Реальний 24-годинний графік RR interval">
+      <div class="lab-demo-chart-head"><span>RR interval · останні 24 години</span><button id="labChartFullscreenBtn" class="lab-chart-fullscreen-btn" type="button" aria-label="На весь екран" title="На весь екран">⛶</button></div>
       <div class="lab-demo-chart-wrap"><canvas id="labDemoChart"></canvas><div id="labChartRotateHint" class="lab-chart-rotate-hint" hidden>Поверніть телефон горизонтально ↻</div></div>
-      <div class="lab-demo-chart-note">LAB COPY · поки DEMO · без реальних даних</div>
+      <div id="rrDataNote" class="lab-demo-chart-note">HealthLab local · завантаження RR interval…</div>
     </div>
-    <div class="chart-lab-badge">Оригінальний графік у 🔬 HealthLab не змінено.</div>
+    <div class="chart-lab-badge">RR показується як збережене rrMs. HRV-derived metrics поки не обчислюються. Оригінальний графік у 🔬 HealthLab не змінено.</div>
   </main>
-  <script src="./lab-demo-chart.js?v=0.3.38"></script>
+  <script src="./rr-real-chart.js?v=0.3.40"></script>
 <script>(()=>{let sx=0,sy=0,control=false;const interactive='button,input,textarea,select,a,label,[contenteditable="true"]';document.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;control=Boolean(e.target?.closest?.(interactive))},{passive:true});document.addEventListener('touchend',e=>{if(control||e.changedTouches.length!==1)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.25)return;parent.postMessage({type:'florivo-iframe-swipe-v1',page:'chart',direction:dx<0?'next':'prev',dx:Math.round(dx)},location.origin)},{passive:true})})();</script></body>
 </html>
