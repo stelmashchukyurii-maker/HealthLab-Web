@@ -1,19 +1,17 @@
 (() => {
-  const canvas=document.getElementById('labDemoChart'),card=document.getElementById('labDemoChartCard'),note=document.getElementById('labChartDataNote'),fullBtn=document.getElementById('labChartFullscreenBtn'),rotateHint=document.getElementById('labChartRotateHint');
+  const canvas=document.getElementById('labDemoChart'),card=document.getElementById('labDemoChartCard'),note=document.getElementById('labChartDataNote'),motionNote=document.getElementById('labMotionDataNote'),fullBtn=document.getElementById('labChartFullscreenBtn'),rotateHint=document.getElementById('labChartRotateHint');
   if(!canvas||!card)return;
   const BASE='http://127.0.0.1:18765',BIN=180,MAX_PAGES=40,LIMIT=5000;
-  let points=[],viewStart=null,viewEnd=null,selected=null,pinchBase=null,analysis=false; const touches=new Map();
+  let points=[],motionPoints=[],viewStart=null,viewEnd=null,selected=null,pinchBase=null,analysis=false; const touches=new Map();
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),norm=t=>Number(t)<1e12?Number(t)*1000:Number(t);
   async function lf(url){try{return await fetch(url,{cache:'no-store',targetAddressSpace:'loopback'})}catch(e){return fetch(url,{cache:'no-store'})}}
+  async function rangeRows(table,from,to){let cts=null,crid=null,rows=[];for(let page=0;page<MAX_PAGES;page++){const u=new URL(BASE+'/range');u.searchParams.set('table',table);u.searchParams.set('from',from);u.searchParams.set('to',to);u.searchParams.set('limit',LIMIT);if(cts!=null){u.searchParams.set('cursor_ts',cts);u.searchParams.set('cursor_rowid',crid)}const r=await lf(u),j=await r.json();if(!r.ok||j.ok!==true||j.route!=='LOCAL'||j.store!=='noop_whoop.db'||j.read_only!==true||j.api!=='historical_range_v1'||j.table!==table)throw new Error('LOCAL /range '+table);rows.push(...(j.rows||[]));if(!j.has_more)break;cts=j.next_cursor_ts;crid=j.next_cursor_rowid;if(cts==null||crid==null)break}return rows}
+  function buildMotion(rows){const bins=new Map();for(const x of rows){const ts=Number(x.ts),gx=Number(x.x),gy=Number(x.y),gz=Number(x.z);if(!Number.isFinite(ts)||![gx,gy,gz].every(Number.isFinite))continue;const k=Math.floor(ts/BIN)*BIN,b=bins.get(k)||{ts:k,n:0,sx:0,sy:0,sz:0,sxx:0,syy:0,szz:0};b.n++;b.sx+=gx;b.sy+=gy;b.sz+=gz;b.sxx+=gx*gx;b.syy+=gy*gy;b.szz+=gz*gz;bins.set(k,b)}return[...bins.values()].map(b=>{const vx=Math.max(0,b.sxx/b.n-(b.sx/b.n)**2),vy=Math.max(0,b.syy/b.n-(b.sy/b.n)**2),vz=Math.max(0,b.szz/b.n-(b.sz/b.n)**2);return{ts:b.ts,motion:Math.sqrt(vx+vy+vz),n:b.n}}).sort((a,b)=>a.ts-b.ts)}
   async function load(){
-    const to=Math.floor(Date.now()/1000),from=to-86400; let cts=null,crid=null,rows=[];
+    const to=Math.floor(Date.now()/1000),from=to-86400; let rows=[];
     try{
-      for(let page=0;page<MAX_PAGES;page++){
-        const u=new URL(BASE+'/range');u.searchParams.set('table','hrSample');u.searchParams.set('from',from);u.searchParams.set('to',to);u.searchParams.set('limit',LIMIT);
-        if(cts!=null){u.searchParams.set('cursor_ts',cts);u.searchParams.set('cursor_rowid',crid)}
-        const r=await lf(u);const j=await r.json();if(!r.ok||j.ok!==true||j.route!=='LOCAL'||j.store!=='noop_whoop.db'||j.read_only!==true||j.api!=='historical_range_v1')throw new Error('LOCAL /range contract');
-        rows.push(...(j.rows||[])); if(!j.has_more)break; cts=j.next_cursor_ts;crid=j.next_cursor_rowid;if(cts==null||crid==null)break;
-      }
+      rows=await rangeRows('hrSample',from,to);
+      try{const gRows=await rangeRows('gravitySample',from,to);motionPoints=buildMotion(gRows);if(motionNote)motionNote.textContent=`Рух · gravitySample · 3 хв · ${motionPoints.length} точок · ${gRows.length} raw · НЕ кроки`}catch{motionPoints=[];if(motionNote)motionNote.textContent='Рух · gravitySample недоступний · HR працює окремо'}
       const bins=new Map();
       for(const x of rows){const ts=Number(x.ts),bpm=Number(x.bpm);if(!Number.isFinite(ts)||!Number.isFinite(bpm)||bpm<=0)continue;const k=Math.floor(ts/BIN)*BIN;const b=bins.get(k)||{ts:k,sum:0,n:0,min:bpm,max:bpm};b.sum+=bpm;b.n++;b.min=Math.min(b.min,bpm);b.max=Math.max(b.max,bpm);bins.set(k,b)}
       points=[...bins.values()].map(b=>({ts:b.ts,bpm:b.sum/b.n,min:b.min,max:b.max,n:b.n})).sort((a,b)=>a.ts-b.ts);
@@ -24,7 +22,7 @@
   function box(){const r=canvas.getBoundingClientRect(),land=matchMedia('(orientation:landscape)').matches;const left=land||analysis?48:40,right=12,top=34,bottom=42;return{r,left,right,top,bottom,pw:r.width-left-right,ph:r.height-top-bottom}}
   const span=()=>Math.max(1,(viewEnd??1)-(viewStart??0)),xFor=(ts,b)=>b.left+((ts-viewStart)/span())*b.pw,tsFor=x=>{const b=box();return viewStart+clamp((x-b.r.left-b.left)/Math.max(1,b.pw),0,1)*span()};
   const fmt=ts=>new Date(norm(ts)).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'});
-  function visible(){return points.filter(p=>p.ts>=viewStart&&p.ts<=viewEnd)}
+  function visible(){return points.filter(p=>p.ts>=viewStart&&p.ts<=viewEnd)} function visibleMotion(){return motionPoints.filter(p=>p.ts>=viewStart&&p.ts<=viewEnd)}
   function draw(){
     const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);const c=canvas.getContext('2d');c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,r.width,r.height);const b=box(),v=visible();
     c.font='10px system-ui,sans-serif';c.fillStyle='#94a3b8';c.strokeStyle='rgba(148,163,184,.16)';c.lineWidth=1;
@@ -34,6 +32,7 @@
     for(let i=0;i<=6;i++){const ts=viewStart+span()*i/6,x=xFor(ts,b);c.beginPath();c.moveTo(x,b.top);c.lineTo(x,b.top+b.ph);c.stroke();c.textAlign='center';c.textBaseline='top';c.fillText(fmt(ts),x,b.top+b.ph+18)}
     c.save();c.beginPath();c.rect(b.left,b.top,b.pw,b.ph);c.clip();c.strokeStyle='#60a5fa';c.lineWidth=2;c.lineJoin='round';c.lineCap='round';c.beginPath();let started=false;
     for(const p of v){const x=xFor(p.ts,b),y=b.top+b.ph-((p.bpm-ymin)/(ymax-ymin))*b.ph;if(!started){c.moveTo(x,y);started=true}else c.lineTo(x,y)}c.stroke();c.restore();
+    const mv=visibleMotion();if(mv.length){const maxM=Math.max(...mv.map(p=>p.motion),1e-6);c.save();c.beginPath();c.rect(b.left,b.top,b.pw,b.ph);c.clip();c.fillStyle='rgba(250,204,21,.22)';const base=b.top+b.ph;for(const p of mv){const x=xFor(p.ts,b),h=clamp(p.motion/maxM,0,1)*b.ph*.28;c.fillRect(x-1,base-h,2,h)}c.restore()}
     if(Number.isFinite(selected)){const p=v.reduce((a,z)=>Math.abs(z.ts-selected)<Math.abs(a.ts-selected)?z:a,v[0]),x=xFor(p.ts,b),y=b.top+b.ph-((p.bpm-ymin)/(ymax-ymin))*b.ph;c.strokeStyle='#f8fafc';c.setLineDash([5,4]);c.beginPath();c.moveTo(x,b.top);c.lineTo(x,b.top+b.ph);c.stroke();c.setLineDash([]);c.fillStyle='#f8fafc';c.font='700 12px system-ui';c.textAlign='center';c.fillText(`${fmt(p.ts)} · ${Math.round(p.bpm)} bpm`,clamp(x,b.left+55,b.left+b.pw-55),Math.max(b.top+14,y-10))}
   }
   function select(x){if(!points.length)return;selected=tsFor(x);draw()}
