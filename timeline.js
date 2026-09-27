@@ -55,6 +55,12 @@ async function load(){
     allRows=(Array.isArray(state)?state:[]).map(r=>({ts:epochMs(r.bucket_ts),avgHr:num(r.avg_hr),minHr:num(r.min_hr),maxHr:num(r.max_hr),motion:num(r.motion_score),rrCount:Number(r.rr_count||0),rmssd:num(r.rmssd_ms),sleep:r.sleep_state==='SLEEP'})).filter(r=>r.ts).sort((a,b)=>a.ts-b.ts);
     events=(Array.isArray(timeline)?timeline:[]).map(e=>({...e,ts:new Date(e.occurred_at).getTime()})).filter(e=>Number.isFinite(e.ts)&&e.ts>=selectedDay.getTime()&&e.ts<=selectedDay.getTime()+86400000).sort((a,b)=>a.ts-b.ts);
     classifyAll();sliceVisible();renderAll();
+    window.dispatchEvent(new CustomEvent('healthlab:daydata',{detail:{
+      dayStart:selectedDay.getTime(),
+      dayEnd:dayEnd(),
+      rows:allRows.map(r=>({ts:r.ts,state:r.state,avgHr:r.avgHr,rmssd:r.rmssd,motion:r.motion})),
+      events:events.map(e=>({id:e.id,ts:e.ts,title:e.title,event_type:e.event_type,occurred_at:e.occurred_at}))
+    }}));
     $('status').textContent=`${allRows.length} п’ятихвилинних вікон · ${events.length} подій`;
   }catch(e){$('status').textContent='Помилка: '+e.message;allRows=[];rows=[];renderAll()}
 }
