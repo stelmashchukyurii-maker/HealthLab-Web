@@ -96,13 +96,35 @@ function prefill(checkin) {
   syncValues();
 }
 
+async function ensureWakeFact(wakeAtIso) {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw userError || new Error("Немає користувача.");
+  const wakeAt = new Date(wakeAtIso);
+  const start = new Date(wakeAt); start.setHours(0,0,0,0);
+  const end = new Date(start); end.setDate(end.getDate()+1);
+  const { data: existing, error: findError } = await supabase
+    .from("hl_timeline_item").select("id,start_at").eq("user_id",user.id)
+    .eq("truth_type","FACT").eq("category","WAKE")
+    .gte("start_at",start.toISOString()).lt("start_at",end.toISOString()).limit(1);
+  if (findError) throw findError;
+  if (existing?.length) return existing[0];
+  const { data, error } = await supabase.from("hl_timeline_item").insert({
+    user_id:user.id, truth_type:"FACT", category:"WAKE", title:"Пробудження",
+    start_at:wakeAtIso, source:"florivo_morning", source_ref:"morning_begin"
+  }).select("id,start_at").single();
+  if (error) throw error;
+  return data;
+}
+
 async function openMorning() {
   overlay.hidden = false;
   status.className = "morning-status";
   status.textContent = "Фіксую пробудження…";
   saveBtn.disabled = true;
   try {
+    const wakeAt = new Date().toISOString();
     const begun = await morningApi("begin", { method: "POST", body: {} });
+    await ensureWakeFact(wakeAt);
     const current = await morningApi("status");
     prefill(current.checkin || begun.checkin);
     if (current.completed) {
