@@ -103,14 +103,14 @@ async function ensureWakeFact(wakeAtIso) {
   const start = new Date(wakeAt); start.setHours(0,0,0,0);
   const end = new Date(start); end.setDate(end.getDate()+1);
   const { data: existing, error: findError } = await supabase
-    .from("hl_timeline_item").select("id,start_at").eq("user_id",user.id)
-    .eq("truth_type","FACT").eq("category","WAKE")
+    .from("hl_timeline_item").select("id,start_at").eq("owner_id",user.id)
+    .eq("truth_kind","FACT").eq("category","WAKE").is("deleted_at",null)
     .gte("start_at",start.toISOString()).lt("start_at",end.toISOString()).limit(1);
   if (findError) throw findError;
   if (existing?.length) return existing[0];
   const { data, error } = await supabase.from("hl_timeline_item").insert({
-    user_id:user.id, truth_type:"FACT", category:"WAKE", title:"Пробудження",
-    start_at:wakeAtIso, source:"florivo_morning", source_ref:"morning_begin"
+    owner_id:user.id, truth_kind:"FACT", category:"WAKE", title:"Пробудження",
+    start_at:wakeAtIso, timezone:"Europe/Oslo", source_type:"USER"
   }).select("id,start_at").single();
   if (error) throw error;
   return data;
