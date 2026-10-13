@@ -21,3 +21,11 @@ main{flex:1;min-height:0;display:flex;flex-direction:column}.auth-card{width:min
 .hr-chart-card{margin-top:12px;border:1px solid rgba(96,165,250,.28);background:#0b1220;border-radius:14px;padding:10px;overflow:hidden}.hr-chart-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;color:#dbeafe;font-size:12px}.hr-chart-head span{color:#64748b;font-size:10px}.hr-chart-svg{display:block;width:100%;height:auto;margin-top:6px;overflow:visible}.hr-grid{stroke:#243047;stroke-width:1}.hr-axis-label,.hr-axis-title{fill:#64748b;font-size:10px}.hr-event-line{stroke:#f59e0b;stroke-width:2;stroke-dasharray:5 5}.hr-event-label{fill:#fbbf24;font-size:10px;font-weight:700}.hr-line{fill:none;stroke:#60a5fa;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.hr-chart-stats{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:5px;color:#94a3b8;font-size:11px}.hr-chart-stats b{color:#e2e8f0;font-size:12px}.hr-chart-source{margin-top:6px;color:#475569;font-size:9px;line-height:1.3}
 @media (min-width:720px){.messages{padding-left:24px;padding-right:24px}.bubble{max-width:72%}.topbar{padding-left:24px;padding-right:24px}.composer{padding-left:20px;padding-right:20px}.attachment-preview{padding-left:20px;padding-right:20px}}
 @media (display-mode:standalone){.topbar{padding-top:calc(12px + env(safe-area-inset-top))}.view-tabs{top:calc(67px + env(safe-area-inset-top))}}
+
+/* Mobile chat composer containment (v0.3.81): only the active chat view. */
+body:has(#chatView:not([hidden]) #chatPane:not([hidden])) .app-shell{height:var(--florivo-chat-viewport-height,100dvh);min-height:0;overflow:hidden}
+body:has(#chatView:not([hidden]) #chatPane:not([hidden])) main{flex:1;min-height:0;overflow:hidden}
+body:has(#chatView:not([hidden]) #chatPane:not([hidden])) #chatView{display:flex;flex-direction:column;min-height:0;flex:1}
+body:has(#chatView:not([hidden]) #chatPane:not([hidden])) #chatPane{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+body:has(#chatView:not([hidden]) #chatPane:not([hidden])) .messages{padding-bottom:24px}
+body:has(#chatView:not([hidden]) #chatPane:not([hidden])) .composer{position:relative;bottom:auto;flex-shrink:0}
